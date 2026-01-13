@@ -81,7 +81,7 @@ app.get('/', (req, res) => {
             status: 'active',
             endpoints: {
                 health: '/api/health',
-                products: 'api/products'
+                products: '/api/products'
             }
         }
     );

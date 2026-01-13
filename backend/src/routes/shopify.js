@@ -47,6 +47,14 @@ router.post('/sync/initial', async (req, res) => {
     }
 });
 
+/*
+    POST /api/shopify/sync/initial-db
+    Sincronización inicial CON guardado en base de datos
+
+    ESTA RUTA GUARDA EN POSTGRESQL
+*/
+router.post('/sync/initial-db', shopifyController.initialSyncWithDatabase);
+
 
 // ===========================================================
 // OBTENER MUESTRA

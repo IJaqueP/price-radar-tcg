@@ -112,6 +112,10 @@ async function getProducts(options = {}) {
                         status
                         createdAt
                         updatedAt
+                        handle
+                        featuredImage {
+                            url
+                        }
 
                         variants(first: 10) {
                             edges {
@@ -224,6 +228,10 @@ async function getProductById(productId) {
             status
             createdAt
             updatedAt
+            handle
+            featuredImage {
+                url
+            }
 
             variants(first: 10) {
                 edges {
@@ -350,12 +358,14 @@ function formatProduct(graphqlProduct) {
         id: graphqlProduct.legacyResourceId, // ID numérico (compatible con código anterior)
         gid: graphqlProduct.id, // ID de GraphQL
         title: graphqlProduct.title,
+        handle: graphqlProduct.handle,
         vendor: graphqlProduct.vendor,
         product_type: graphqlProduct.productType,
         tags: graphqlProduct.tags.join(', '), // GraphQL devuelve array, convertir a string
         status: graphqlProduct.status.toLowerCase(),
         created_at: graphqlProduct.createdAt,
         updated_at: graphqlProduct.updatedAt,
+        image: graphqlProduct.featuredImage ? { src: graphqlProduct.featuredImage.url } : null,
 
         variants: [
             {
