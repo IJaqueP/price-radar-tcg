@@ -108,6 +108,10 @@ app.get('/api/health', (req, res) => {
 // IMPORTAR Y USAR RUTAS DE LA API
 // ===========================================================
 
+// Rutas de Shopify
+const shopifyRoutes = require('./routes/shopify');
+app.use('/api/shopify', shopifyRoutes);
+
 // TODO: Descomentar cuando creemos los archivos de rutas
 // const productRoutes = require('./routes/products');
 // app.use('/api/products', productRoutes);
@@ -127,7 +131,9 @@ app.use((req, res) => {
             message: `La ruta ${req.method} ${req.path} no existe`,
             availableEndpoints: [
                 'GET /',
-                'GET /api/health'
+                'GET /api/health',
+                'GET /api/shopify/stats',
+                'POST /api/shopify/sync/initial'
             ]
         }
     );

@@ -1,5 +1,5 @@
 /*
-    SHOPIFY SERVICE
+    SHOPIFY SERVICE (GRAPHQL)
 
     Este servicio maneja toda la comunicación con la API de Shopify.
     Funciones para obtener productos, actualizar precios, etc.
@@ -28,6 +28,57 @@ function ensureConfigured() {
 }
 
 // ===========================================================
+// FUNCIÓN GENÉRICA PARA GRAPHQL QUERIES
+// ===========================================================
+
+/*
+    Ejecuta una query GraphQL en Shopify
+    @param {string} query - Query GraphQL
+    @param {Object} variables - Variables para la query
+    @returns {Promise<Object>} Respuesta de GraphQL
+*/
+async function executeGraphQL(query, variables = {}) {
+    ensureConfigured();
+
+    try {
+        const response = await axios.post(
+            shopifyConfig.graphqlUrl,
+            {
+                query,
+                variables
+            },
+            {
+                headers: shopifyConfig.headers,
+                timeout: 30000
+            }
+        );
+
+        // Verificar errores de GraphQL
+        if (response.data.errors) {
+            throw new Error(
+                'GraphQL Errors: ' + JSON.stringify(response.data.errors, null, 2)
+            );
+        }
+
+        return response.data.data;
+    
+    } catch (error) {
+        console.error('❌ Error en GraphQL query:', error.message);
+
+        if (error.response) {
+            throw new Error(
+                `Shopify GraphQL error ${error.response.status}: ${JSON.stringify(error.response.data)}`
+            );
+        } else if (error.request) {
+            throw new Error('No se pudo contectar con Shopify. Verificar conexión a internet')
+        } else {
+            throw error;
+        }
+    } 
+}
+
+
+// ===========================================================
 // OBTENER PRODUCTOS
 // ===========================================================
 
@@ -37,112 +88,108 @@ function ensureConfigured() {
     IMPORTANTE: Shopify devuelve máximo 250 productos por request.
     Si tienes 250+ productos, necesita hacer múltiples request.
 
-    @params {Object} options - Opciones de filtrado
-    @params {number} options.limit - Productos por página (máx 250)
-    @params {string} options.status - Estado (active, draft, archived)
-    @params {string} options.product_type - Tipo de producto
-    @params {string} options.vendor - Fabricante
-    @params {string} options.sinceId - ID del último producto (para paginación)
-    @returns {Promise<Array} Array de productos
+    @param {Object} options - Opciones de filtrado
+    @param {number} options.first - Cantidad de productos (máx 250)
+    @param {string} options.after - Cursor para paginación
+    @param {string} options.query - Query de búsqueda (opcional)
+    @returns {Promise<Object>} Productos y pageInfo
 */
 async function getProducts(options = {}) {
-    ensureConfigured();
+    const { first = 250, after = null, query = null } = options;
 
-    // Opciones por defecto
-    const {
-        limit = 250,
-        status = 'active',
-        product_type = null,
-        vendor = null,
-        sinceId = null
-    } = options;
+    // Query GraphQL
+    const graphqlQuery = `
+        query getProducts($first: Int!, $after: String, $query: String) {
+            products(first: $first, after: $after, query: $query) {
+                edges {
+                    node {
+                        id
+                        legacyResourceId
+                        title
+                        vendor
+                        productType
+                        tags
+                        status
+                        createdAt
+                        updatedAt
 
-    // Construir query params
-    const params = new URLSearchParams(
-        {
-            limit: limit.toString(),
-            status
-        }
-    );
-
-    if (product_type) params.append('product_type', product_type);
-    if (vendor) params.append('vendor', vendor);
-    if (sinceId) params.append('since_id', sinceId);
-
-    // URL completa
-    const url = `${shopifyConfig.apiUrl}/products.json?${params.toString()}`;
-
-    try {
-        console.log(`📡 Consultando Shopify: ${url}`);
-
-        const response = await axios.get(url, {
-            headers: shopifyConfig.headers,
-            timeout: 30000 // 30 segundos timeout
-        });
-
-        console.log(`🆗 Obtenidos: ${response.data.products.length} productos de Shopify`);
-
-        return response.data.products;
-
-    } catch (error) {
-        console.error('❌ Error al obtener productos de Shopify:', error.message);
-
-        if (error.response) {
-            // Error de la API (401, 403, 404, etc)
-            throw new Error(
-                `Shopify API error ${error.response.status}: ${error.response.data.errors || error.message}`
-            );
-        } else if (error.request) {
-            // Error de red (sin respuesta)
-            throw new Error('No se pudo conectar con Shopify. Verifica tu conexión a internet.')
-        } else {
-            // Cualquier otro error
-            throw error;
+                        variants(first: 10) {
+                            edges {
+                                node {
+                                    id
+                                    legacyResourceId
+                                    sku
+                                    price
+                                    compareAtPrice
+                                    inventoryQuantity
+                                    barcode
+                                }
+                            }
+                        }
+                    }
+                    cursor
+                }
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
         }
     }
+    `;
+
+    const variables = {
+        first,
+        after,
+        query
+    };
+
+    console.log(`📡 Consultando Shopify GraphQL: ${first} productos${after ? ' (página siguiente)' : ''}`);
+
+    const data = await executeGraphQL(graphqlQuery, variables);
+
+    console.log(`🆗 Obtenidos ${data.products.edges.length} productos`);
+
+    return {
+        products: data.products.edges.map(edge => formatProduct(edge.node)),
+        pageInfo: data.products.pageInfo
+    };
 }
 
-/*
-    Obtiene TODOS los productos usando paginación automática
 
-    @params {Object} filters - Filtros (product_type, vendor, etc)
+/*
+    Obtiene TODOS los productos usando paginación cursor-based
+    @param {Object} options - Opciones de filtrado
     @returns {Promise<Array>} Todos los productos
 */
-
-async function getAllProducts(filters = {}) {
+async function getAllProducts(options = {}) {
     ensureConfigured();
 
     let allProducts = [];
-    let lastId = null;
-    let hasMore = true;
+    let hasNextPage = true;
+    let cursor = null;
     let pageCount = 0;
 
-    console.log('📦 Iniciando obtención de todos los productos de Shopify...');
+    console.log('📦 Iniciando obtención de todos los productos con GraphQL');
 
-    while (hasMore) {
+    while (hasNextPage) {
         pageCount++;
-        console.log(`🗒️ Obteniendo página ${pageCount}...`);
+        console.log(`🗒️ Obteniendo página ${pageCount}`);
 
-        const products = await getProducts(
+        const result = await getProducts(
             {
-                ...filters,
-                limit: 250,
-                sinceId: lastId
+                first: 250,
+                after: cursor,
+                query: options.query || null
             }
         );
 
-        if (products.length === 0) {
-            hasMore = false;
-        } else {
-            allProducts = allProducts.concat(products);
-            lastId = products[products.length - 1].id;
+        allProducts = allProducts.concat(result.products);
 
-            // Si obtuvimos menos de 250, es la última página
-            if (products.length < 250) {
-                hasMore = false;
-            }
+        hasNextPage = result.pageInfo.hasNextPage;
+        cursor = result.pageInfo.endCursor;
 
-            // Pausa de 500ms entre requests (rate limiting de Shopify)
+        // Pausa de 500mx entre requests (rate limitng)
+        if (hasNextPage) {
             await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
@@ -154,69 +201,113 @@ async function getAllProducts(filters = {}) {
 
 /*
     Obtiene un producto específico por ID
-
-    @params {number} productId - ID del producto
+    @param {string} productId - ID de GraphQL (gid://shopify/Product/123) o legacy ID
     @returns {Promise<Object>} Producto
-*/
+*/  
 async function getProductById(productId) {
     ensureConfigured();
 
-    const url = `${shopifyConfig.apiUrl}/products/${productId}.json`;
+    // Convertir legacy ID a GraphQL si es necesario
+    const gid = productId.includes('gid://')
+    ? productId
+    : `gid://shopify/Product/${productId}`;
 
-    try {
-        const response = await axios.get(url, {
-            headers: shopifyConfig.headers
-        });
+    const query = `
+        query getProduct($id: ID!) {
+            product(id: $id) {
+            id
+            legacyResourceId
+            title
+            vendor
+            productType
+            tags
+            status
+            createdAt
+            updatedAt
 
-        return response.data.product;
-
-    } catch (error) {
-        if (error.response && error.response.status === 404) {
-            throw new Error(`Producto ${productId} no encontrado en Shopify`);
+            variants(first: 10) {
+                edges {
+                    node {
+                        id
+                        legacyResourceId
+                        sku
+                        price
+                        compareAtPrice
+                        inventoryQuantity
+                        barcode
+                    }
+                }
+            }
+            }
         }
-        throw Error;
+    `;
+
+    const data = await executeGraphQL(query, { id: gid });
+
+    if (!data.product) {
+        throw new Error(`Producto ${productId} no encontrado`);
     }
+
+    return formatProduct(data.product);
 }
 
+
 // ===========================================================
-// ACTUALIZA PRECIO
+// ACTUALIZA PRECIO (MUTATION)
 // ===========================================================
 
 /*
-    Actualiza el precio de un producto en Shopify
+    Actualiza el precio de un producto usando GraphQL Mutation
 
-    @param {number} productId - ID del producto
-    @param {number} variantId - ID de la variante
+    @param {string} variantId - ID de la variante (gis o legacy)
     @param {number} newPrice - Nuevo precio
     @returns {Promise<Object>} Variante actualizada
 */
-async function updateProductPrice(productId, variantId, newPrice) {
+async function updateProductPrice(variantId, newPrice) {
     ensureConfigured();
 
-    const url = `${shopifyConfig.apiUrl}/variant/${variantId}.json`;
+    // Convertir legacy ID a GraphQL si es necesario
+    const gid = variantId.includes('gid://')
+    ? variantId
+    : `gid://shopify/ProductVariant/${variantId}`;
 
-    const data = {
-        variant: {
-            id: variantId,
+    const mutation = `
+        mutation updateVariantPrice($input: ProductVariantInput!) {
+            productVariantUpdate(input: $input) {
+                productVariant {
+                    id
+                    legacyResourceId
+                    price
+                }
+                userErrors {
+                    field
+                    message
+                }
+            }
+        }
+    `;
+
+    const variables = {
+        input: {
+            id: gid,
             price: newPrice.toString()
         }
     };
 
-    try {
-        console.log(`Actualiza precio del producto ${productId} a $${newPrice}`);
+    console.log(`💸 Actualizando precio de variante ${variantId} a ${newPrice}`);
 
-        const response = await axios.put(url, data, {
-            headers: shopifyConfig.headers
-        });
+    const data = await executeGraphQL(mutation, variables);
 
-        console.log(`Precio actualizado correctamente`);
-
-        return response.data.variant;
-
-    } catch (error) {
-        console.error(`❌ Error al actualizar el precio:`, error.message);
-        throw error;
+    if (data.productVariantUpdate.userErrors.length > 0) {
+        throw new Error(
+            'Errores al actualizar precio: ' +
+            JSON.stringify(data.productVariantUpdate.userErrors)
+        );
     }
+
+    console.log(`🆗 Precio actualizado correctamente`);
+
+    return data.productVariantUpdate.productVariant;
 }
 
 // ===========================================================
@@ -226,37 +317,69 @@ async function updateProductPrice(productId, variantId, newPrice) {
 /*
     Obtiene el conteo de productos (más rápido que obtener todos)
 
-    @param {Object} filters - Filtros
     @returns {Promise<number>} Cantidad de productos
 */
-async function getProductCount(filters = {}) {
+async function getProductCount() {
     ensureConfigured();
 
-    const params = new URLSearchParams();
-    if (filters.product_type) params.append('product_type', filters.product_type);
-    if (filters.vendor) params.append('vendor', filters.vendor);
-    if (filters.status) params.append('status', filters.status || 'active');
+    const query = `
+        query {
+            productsCount {
+                count
+            }
+        }
+    `;
 
-    const url = `${shopifyConfig.apiUrl}/products/count.json?${params.toString()}`;
+    const data = await executeGraphQL(query);
 
-    try {
-        const response = await axios.get(url, {
-            headers: shopifyConfig.headers
-        });
-
-        return response.data.count;
-
-    } catch (error) {
-        console.error('❌ Error al contar productos:', error.message);
-        throw error;
-    }
+    return data.productsCount.count;
 }
+
+
+// ===========================================================
+// FUNCIONES AUXILIARES
+// ===========================================================
+/*
+    Formatea un producto de GraphQL a formato consistente
+*/
+function formatProduct(graphqlProduct) {
+    // Extraer primera variante (mayoría de sellados tienen solo 1)
+    const firstVariant = graphqlProduct.variants.edges[0]?.node || {};
+
+    return {
+        id: graphqlProduct.legacyResourceId, // ID numérico (compatible con código anterior)
+        gid: graphqlProduct.id, // ID de GraphQL
+        title: graphqlProduct.title,
+        vendor: graphqlProduct.vendor,
+        product_type: graphqlProduct.productType,
+        tags: graphqlProduct.tags.join(', '), // GraphQL devuelve array, convertir a string
+        status: graphqlProduct.status.toLowerCase(),
+        created_at: graphqlProduct.createdAt,
+        updated_at: graphqlProduct.updatedAt,
+
+        variants: [
+            {
+                id: firstVariant.legacyResourceId,
+                gid: firstVariant.id,
+                sku: firstVariant.sku,
+                price: firstVariant.price,
+                compare_at_price: firstVariant.compareAtPrice,
+                inventory_quantity: firstVariant.inventoryQuantity,
+                barcode: firstVariant.barcode
+            }
+        ]
+    };
+}
+
+
+
 
 // ===========================================================
 // EXPORTAR
 // ===========================================================
 
 module.exports = {
+    executeGraphQL,
     getProducts,
     getAllProducts,
     getProductById,

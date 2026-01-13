@@ -26,6 +26,7 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@shopify/shopify-api": "^12.2.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",

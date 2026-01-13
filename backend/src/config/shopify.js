@@ -15,7 +15,7 @@ require('dotenv').config();
 const shopifyConfig = {
     // URL de la tienda (sin http://)
     // Ejemplo: "oasis-games.myshopify.com"
-    storeURL: process.env.SHOPIFY_STORE_URL,
+    storeUrl: process.env.SHOPIFY_STORE_URL,
 
     // Access Token (empieza con shpat_)
     accessToken: process.env.SHOPIFY_ACCESS_TOKEN,
@@ -25,16 +25,15 @@ const shopifyConfig = {
     // Formato: "YYYY-MM (ejemplo: "2024-01)"
     apiVersion: process.env.SHOPIFY_API_VERSION || '2024-01',
 
-    // Construir URL base de la API
-    // Resultado: "https://oasis-games.myshopify.com/admin/api/2024-01"
-    get apiURL() {
+    // URL de GraphQL Admin Api
+    get graphqlUrl() {
         if (!this.storeUrl) {
             return null;
         }
-        return `https://${this.storeUrl}/admin/api/${this.apiVersion}`;
+        return `https://${this.storeUrl}/admin/api/${this.apiVersion}/graphql.json`;
     },
 
-    // Headers que se envían en cada request
+    // Headers para GraphQL
     get headers() {
         return {
             'Content-Type': 'application/json',
@@ -43,6 +42,7 @@ const shopifyConfig = {
     }
 };
 
+    
 // ===========================================================
 // VALIDACIÓN DE CONFIGURACIÓN
 // ===========================================================

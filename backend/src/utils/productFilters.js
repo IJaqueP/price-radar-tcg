@@ -289,7 +289,7 @@ function identifyGame(product) {
     @returns {Object} { isTCG, category, game }
 */
 function classifyProduct(product) {
-    const ifTCG = isTCGProduct(product);
+    const isTCG = isTCGProduct(product);
 
     if (!isTCG) {
         return {
