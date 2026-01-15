@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Radar TCG - Oasis Games</title>
+
+    <!-- Bootstrap 5.3.2 CSS (Base estructural) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons 1.11.3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- CSS Global -->
+    <link rel="stylesheet" href="css/global/variables.css">
+    <link rel="stylesheet" href="css/global/base.css">
+    
+    <!-- CSS Componentes -->
+    <link rel="stylesheet" href="css/components/navbar.css">
+    <link rel="stylesheet" href="css/components/button-primary.css">
+    <link rel="stylesheet" href="css/components/button-danger.css">
+    <link rel="stylesheet" href="css/components/button-success.css">
+    <link rel="stylesheet" href="css/components/table-products.css">
+    <link rel="stylesheet" href="css/components/badge-stock.css">
+    <link rel="stylesheet" href="css/components/badge-price.css">
+    <link rel="stylesheet" href="css/components/loader.css">
+    <link rel="stylesheet" href="css/components/empty-state.css">
+    <link rel="stylesheet" href="css/components/modal-confirm.css">
+    
+    <!-- CSS Páginas -->
+    <link rel="stylesheet" href="css/pages/dashboard.css">
+    <link rel="stylesheet" href="css/pages/ventas.css">
+    <link rel="stylesheet" href="css/pages/configuracion.css">
+
+</head>
+
+<body>
+    <!-- Navbar será inyectado aquí -->
+    <div id="navbar"></div>
+
+    <!-- Contenido principal -->
+    <main id="app-content" class="main-content">
+        <!-- Las páginas se cargarán dinámicamente aquí -->
+    </main>
+
+
+    <!-- Loading global -->
+    <div id="app-loader" class="app-loader hidden">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap 5.3.2 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App JavaScript (ES6 Module) -->
+    <script type="module" src="js/main.js"></script>
+
+</body>
+
+</html>

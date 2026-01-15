@@ -112,9 +112,10 @@ app.get('/api/health', (req, res) => {
 const shopifyRoutes = require('./routes/shopify');
 app.use('/api/shopify', shopifyRoutes);
 
-// TODO: Descomentar cuando creemos los archivos de rutas
-// const productRoutes = require('./routes/products');
-// app.use('/api/products', productRoutes);
+// Rutas de productos
+const productRoutes = require('./routes/products');
+app.use('/api/products', productRoutes);
+
 
 // ===========================================================
 // RUTA 404 - NO ENCONTRADA
@@ -176,3 +177,18 @@ app.use((err, req, res, next) => {
 
 // Exportar app para que server.js pueda usarla
 module.exports = app;
+
+
+// ===========================================================
+// INICIAR CRON JOBS
+// ===========================================================
+
+/*
+const { startCronJobs } = require('./jobs/syncJob');
+
+// Iniciará cron jobs si no estamos en modo test
+if (process.env.NODE_ENV !== 'test') {
+    startCronJobs();
+}
+
+*/

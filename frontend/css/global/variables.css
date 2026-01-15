@@ -1,0 +1,125 @@
+/*===========================================================
+    CSS VARIABLES - PRICE RADAR TCG
+===========================================================*/
+
+:root {
+/* ===== COLORS - PRIMARY ===== */
+    --color-primary: #FF6B35;
+    --color-primary-hover: #FF8C4D;
+    --color-primary-active: #E55A24;
+    --color-primary-light: rgba(255, 107, 53, 0.15);
+    --color-primary-shadow: rgba(255, 107, 53, 0.4);
+
+
+    /* ===== COLORS - BACKGROUNDS ===== */
+    --bg-darkest: #0f0f0f;
+    --bg-dark: #1a1a1a;
+    --bg-medium: #2d2d2d;
+    --bg-light: #3f3f3f;
+    --bg-lighter: #525252;
+
+
+    /* ===== COLORS - TEXT ===== */
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #999999;
+    --text-dark: #1a1a1a;
+
+
+    /* ===== COLORS - STATUS ===== */
+    --color-success: #22c55e;
+    --color-success-hover: #3ed66f;
+    --color-success-light: rgba(34, 197, 94, 0.15);
+    
+    --color-warning: #f59e0b;
+    --color-warning-hover: #fbbf24;
+    --color-warning-light: rgba(245, 158, 11, 0.15);
+    
+    --color-danger: #ef4444;
+    --color-danger-hover: #f87171;
+    --color-danger-light: rgba(239, 68, 68, 0.15);
+    
+    --color-info: #06b6d4;
+    --color-info-hover: #22d3ee;
+    --color-info-light: rgba(6, 182, 212, 0.15);
+
+
+    /* ===== COLORS - STOCK LEVELS ===== */
+    --stock-high: #22c55e;
+    --stock-medium: #f59e0b;
+    --stock-low: #ef4444;
+    --stock-out: #6b7280;
+
+
+    /* ===== COLORS - BORDERS ===== */
+    --border-color: #3f3f3f;
+    --border-light: #525252;
+    --border-lighter: #6b6b6b;
+
+        /* ===== SPACING ===== */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    /* ===== TYPOGRAPHY ===== */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-xxl: 1.5rem;
+    --font-size-3xl: 2rem;
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+
+    /* ===== BORDER RADIUS ===== */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+
+    /* ===== SHADOWS ===== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+    --shadow-primary: 0 4px 12px var(--color-primary-shadow);
+
+    /* ===== TRANSITIONS ===== */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+    --transition-all: all var(--transition-normal);
+
+    /* ===== Z-INDEX LAYERS ===== */
+    --z-base: 1;
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+
+    /* ===== LAYOUT ===== */
+    --navbar-height: 70px;
+    --container-max-width: 1400px;
+    --sidebar-width: 250px;
+
+    /* ===== MISC ===== */
+    --scrollbar-width: 8px;
+    --scrollbar-thumb: var(--bg-light);
+    --scrollbar-track: var(--bg-dark);
+}
