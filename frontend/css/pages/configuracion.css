@@ -1,0 +1,35 @@
+/* ===========================================================
+    CONFIGURACIÓN PAGE - PRICE RADAR TCG
+=========================================================== */
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #3f3f3f;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-title i {
+    color: #FF6B35;
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: #999999;
+    margin: 0;
+}
