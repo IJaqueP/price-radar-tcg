@@ -17,6 +17,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 // ===========================================================
 // CREAR APLICACIÓN EXPRESS
@@ -40,6 +41,7 @@ const app = express();
         4. Llega a tu ruta -> Ejecuta tu código
         5. Responde al cliente
 */
+
 
 // CORS: Permite que el frontend (otro dominio/puerto) haga peticiones al backend
 app.use(cors(
@@ -87,26 +89,14 @@ app.get('/', (req, res) => {
     );
 });
 
-/**
-    HEALTH CHECK
-        - GET /api/health
-        Endpoint para verificar que el servidor está funcionando
-        Útil para monitorio y deployment
-*/
-app.get('/api/health', (req, res) => {
-    res.json(
-        {
-            status: 'OK',
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(), // Segundos desde que arrancó el servidor
-            environment: process.env.NODE_ENV || 'development'
-        }
-    );
-});
 
 // ===========================================================
 // IMPORTAR Y USAR RUTAS DE LA API
 // ===========================================================
+
+// Rutas de Health Check
+const healthRoutes = require('./routes/health');
+app.use('/api', healthRoutes);
 
 // Rutas de Shopify
 const shopifyRoutes = require('./routes/shopify');
@@ -118,58 +108,15 @@ app.use('/api/products', productRoutes);
 
 
 // ===========================================================
-// RUTA 404 - NO ENCONTRADA
-// ===========================================================
-
-/*
-    Esta ruta se ejecutará si ninguna otra ruta coincide
-    DEBE estar al final, después de todas las rutas válidas
-*/
-app.use((req, res) => {
-    res.status(404).json(
-        {
-            error: 'Ruta no encontrada',
-            message: `La ruta ${req.method} ${req.path} no existe`,
-            availableEndpoints: [
-                'GET /',
-                'GET /api/health',
-                'GET /api/shopify/stats',
-                'POST /api/shopify/sync/initial'
-            ]
-        }
-    );
-});
-
-// ===========================================================
 // MANEJO DE ERRORES GLOBALES
 // ===========================================================
 
-/*
-    Este middleware captura TODOS los errores que ocurran en la aplicación
-    Express sabe que es un error handler porque tiene 4 parámetros (err, req, res, next)
-*/
-app.use((err, req, res, next) => {
-    console.error('❌ ERROR EN LA APLICACIÓN:');
-    console.error(err.stack); // Muestra el stack trace del error
+// Manejador de rutas no encontradas (404)
+app.use(notFoundHandler);
 
-    // Determinar el código de estado HTTP
-    const statusCode = err.statusCode || 500;
+// Manejador global de errores (500, etc)
+app.use(errorHandler);
 
-    // En desarrollo, mostrar el error completo
-    // En producción, ocultar detalles sensibles
-    const errorResponse = {
-        error: err.message || 'Error interno del servidor',
-        status: statusCode
-    };
-
-    // Solo en desarrollo, agregar el stack trace
-    if (process.env.NODE_ENV === 'development') {
-        errorResponse.stack = err.stack;
-        errorResponse.details = err;
-    }
-
-    res.status(statusCode).json(errorResponse);
-});
 
 // ===========================================================
 // EXPORTAR LA APLICACIÓN

@@ -1,0 +1,99 @@
+/* ===========================================================
+    TABLE PRODUCTS - PRICE RADAR TCG
+=========================================================== */
+
+.products-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.products-table thead {
+    background: var(--bg-medium);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.products-table th {
+    padding: var(--spacing-md);
+    text-align: left;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.05em;
+}
+
+.products-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+}
+
+.products-table tbody tr:hover {
+    background: var(--bg-medium);
+}
+
+.products-table td {
+    padding: var(--spacing-md);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+/* Columna de producto */
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.product-image {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+}
+
+.product-details {
+    flex: 1;
+}
+
+.product-name {
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.product-sku {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+/* Columna de precio */
+.price-cell {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+}
+
+/* Acciones */
+.actions-cell {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.btn-action {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-medium);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-action:hover {
+    background: var(--bg-light);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}

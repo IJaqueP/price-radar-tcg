@@ -72,7 +72,7 @@ function success(message, data = null) {
     log('SUCCESS', message, data);
 }
 
-function warning(message, data = null) {
+function warn(message, data = null) {
     log('WARNING', message, data);
 }
 
@@ -93,7 +93,7 @@ function debug(message, data = null) {
 module.exports = {
     info,
     success,
-    warning,
+    warn,
     error,
     debug
 }

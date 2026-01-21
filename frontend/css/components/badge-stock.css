@@ -1,0 +1,39 @@
+/* ===========================================================
+    BADGE STOCK - PRICE RADAR TCG
+=========================================================== */
+
+.badge-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-stock.high {
+    background: var(--color-success-light);
+    color: var(--stock-high);
+}
+
+.badge-stock.medium {
+    background: var(--color-warning-light);
+    color: var(--stock-medium);
+}
+
+.badge-stock.low {
+    background: var(--color-danger-light);
+    color: var(--stock-low);
+}
+
+.badge-stock.out {
+    background: rgba(107, 114, 128, 0.15);
+    color: var(--stock-out);
+}
+
+.badge-stock i {
+    font-size: 0.875rem;
+}

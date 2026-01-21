@@ -5,10 +5,25 @@
     Cliente HTTP para comunicación con el backend.
     Maneja todas las peticiones REST al servidor.
 
-
 =========================================================== */
 
 import CONFIG from '../config.js';
+
+// ===========================================================
+// CLASE DE ERROR PERSONALIZADA
+// ===========================================================
+
+/**
+ * Error personalizado para peticiones API
+ */
+class ApiError extends Error {
+    constructor(message, status, data) {
+        super(message);
+        this.name = 'ApiError';
+        this.status = status;
+        this.data = data;
+    }
+}
 
 // ===========================================================
 // CLIENTE API

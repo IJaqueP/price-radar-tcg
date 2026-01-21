@@ -20,7 +20,7 @@ const rapidApiConfig = {
     // URL base
     baseUrl: process.env.RAPIDAPI_BASE_URL || 'https://cardmarket-api-tcg.p.rapidapi.com',
 
-    // Headers requerido
+    // Headers requeridos
     get headers() {
         return {
             'X-RapidAPI-Key': this.apiKey,

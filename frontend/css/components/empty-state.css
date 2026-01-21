@@ -1,0 +1,59 @@
+/* ===========================================================
+    EMPTY STATE - PRICE RADAR TCG
+    Mensaje cuando no hay datos para mostrar
+=========================================================== */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xxl) var(--spacing-lg);
+    text-align: center;
+    min-height: 300px;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-message {
+    font-size: var(--font-size-base);
+    color: var(--text-muted);
+    max-width: 400px;
+    line-height: 1.6;
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state-action {
+    margin-top: var(--spacing-md);
+}
+
+/* Variantes */
+.empty-state.compact {
+    min-height: 200px;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.empty-state.compact .empty-state-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.empty-state.compact .empty-state-title {
+    font-size: var(--font-size-lg);
+}
+
+.empty-state.compact .empty-state-message {
+    font-size: var(--font-size-sm);
+}
