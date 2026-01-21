@@ -116,13 +116,13 @@ function getDashboardHTML() {
                     <table class="table-products" id="products-table">
                         <thead>
                             <tr>
-                                <th>Producto</th>
-                                <th>Juego</th>
-                                <th class="text-center">Stock</th>
-                                <th class="text-right">Precio Shopify</th>
-                                <th class="text-right">Precio Mercado</th>
-                                <th class="text-center">Diferencia</th>
-                                <th class="text-center">Acciones</th>
+                                <th class="col-product">PRODUCTO</th>
+                                <th class="col-game">JUEGO</th>
+                                <th class="col-stock">STOCK</th>
+                                <th class="col-price">PRECIO SHOPIFY</th>
+                                <th class="col-price">PRECIO MERCADO</th>
+                                <th class="col-diff">DIFERENCIA</th>
+                                <th class="col-actions">ACCIONES</th>
                             </tr>
                         </thead>
                         <tbody id="products-tbody">
@@ -217,60 +217,44 @@ function renderProductsTable() {
     // Generar filas de la tabla
     tbody.innerHTML = filteredProducts.map(product => `
         <tr data-product-id="${product.id}">
-            <!-- Producto con imagen -->
-            <td>
-                <div class="product-cell">
-                    <img 
-                        src="${product.image_url || ''}" 
-                        alt="${product.title}"
-                        class="product-image"
-                        onerror="this.src=''"
-                    />
-                    <div class="product-info">
-                        <span class="product-name" title="${product.title}">
-                            ${truncateText(product.title, 50)}
-                        </span>
-                        <div class="product-meta">
-                            <span>SKU: ${product.sku || 'N/A'}</span>
-                        </div>
-                    </div>
+            <!-- Producto (sin imagen) -->
+            <td class="col-product">
+                <div class="product-info">
+                    <span class="product-name">${product.title}</span>
+                    <span class="product-sku">SKU: ${product.sku || 'N/A'}</span>
                 </div>
             </td>
             
             <!-- Juego -->
-            <td>
+            <td class="col-game">
                 <span class="badge-game badge-${product.game}">
                     ${getGameLabel(product.game)}
                 </span>
             </td>
             
             <!-- Stock -->
-            <td class="text-center">
+            <td class="col-stock">
                 ${getStockBadge(product.stock)}
             </td>
             
             <!-- Precio Shopify -->
-            <td class="text-right">
-                <span class="price-cell">
-                    $${formatPrice(product.shopify_price)}
-                </span>
+            <td class="col-price">
+                <span class="price-value">$${formatPrice(product.shopify_price)}</span>
             </td>
             
             <!-- Precio Mercado -->
-            <td class="text-right">
-                <span class="price-cell">
-                    $${formatPrice(product.market_price)}
-                </span>
+            <td class="col-price">
+                <span class="price-value">$${formatPrice(product.market_price)}</span>
             </td>
             
             <!-- Diferencia -->
-            <td class="text-center">
+            <td class="col-diff">
                 ${getPriceDiffBadge(product.price_difference)}
             </td>
             
             <!-- Acciones -->
-            <td class="text-center">
-                <div class="actions-cell">
+            <td class="col-actions">
+                <div class="actions-group">
                     <button 
                         class="btn-action btn-edit" 
                         onclick="window.dashboardActions.editPrice(${product.id})"
@@ -499,11 +483,6 @@ function showErrorState(message) {
 // UTILIDADES DE FORMATO
 // ============================================
 
-function truncateText(text, maxLength) {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
 function formatPrice(price) {
     return parseFloat(price).toFixed(2);
 }
@@ -521,11 +500,11 @@ function getGameLabel(game) {
 
 function getStockBadge(stock) {
     if (stock >= CONFIG.STOCK.HIGH) {
-        return `<span class="badge-stock stock-high"><i class="bi bi-check-circle"></i> ${stock}</span>`;
+        return `<span class="badge-stock stock-high"><i class="bi bi-check-circle"></i> ${stock} unidades</span>`;
     } else if (stock >= CONFIG.STOCK.MEDIUM) {
-        return `<span class="badge-stock stock-medium"><i class="bi bi-dash-circle"></i> ${stock}</span>`;
+        return `<span class="badge-stock stock-medium"><i class="bi bi-dash-circle"></i> ${stock} unidades</span>`;
     } else if (stock >= CONFIG.STOCK.LOW) {
-        return `<span class="badge-stock stock-low"><i class="bi bi-exclamation-circle"></i> ${stock}</span>`;
+        return `<span class="badge-stock stock-low"><i class="bi bi-exclamation-circle"></i> ${stock} unidades</span>`;
     } else {
         return `<span class="badge-stock stock-out"><i class="bi bi-x-circle"></i> Sin stock</span>`;
     }
@@ -566,7 +545,6 @@ function getMockProducts() {
             title: 'Magic: The Gathering - Murders at Karlov Manor Bundle',
             sku: 'MTG-MKM-BUNDLE',
             game: 'magic',
-            image_url: '',
             stock: 15,
             shopify_price: 45.99,
             market_price: 42.00,
@@ -577,7 +555,6 @@ function getMockProducts() {
             title: 'Pokemon TCG: Scarlet & Violet Temporal Forces Elite Trainer Box',
             sku: 'PKM-TEF-ETB',
             game: 'pokemon',
-            image_url: '',
             stock: 8,
             shopify_price: 52.99,
             market_price: 48.50,
@@ -588,7 +565,6 @@ function getMockProducts() {
             title: 'One Piece Card Game - Paramount War Booster Box',
             sku: 'OP-PW-BB',
             game: 'onepiece',
-            image_url: '',
             stock: 120,
             shopify_price: 89.99,
             market_price: 95.00,
@@ -599,7 +575,6 @@ function getMockProducts() {
             title: 'Gundam Card Game - Booster Pack Set 01',
             sku: 'GND-BP01',
             game: 'gundam',
-            image_url: '',
             stock: 45,
             shopify_price: 34.99,
             market_price: 32.00,
@@ -610,7 +585,6 @@ function getMockProducts() {
             title: 'Magic: The Gathering - Commander Masters Draft Booster Box',
             sku: 'MTG-CMM-DBB',
             game: 'magic',
-            image_url: '',
             stock: 3,
             shopify_price: 259.99,
             market_price: 245.00,

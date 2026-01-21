@@ -1,112 +1,527 @@
 /* ===========================================================
     TABLE PRODUCTS - PRICE RADAR TCG
+    Diseño inspirado en tabla de pricing moderna
 =========================================================== */
 
-.products-table {
+/* ===== CONTENEDOR DE LA TABLA ===== */
+.table-products-wrapper {
     width: 100%;
-    border-collapse: collapse;
-    font-size: var(--font-size-sm);
+    overflow-x: auto;
+    background: #1a1a1a;
+    border-radius: 30px;
+    padding: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.products-table thead {
-    background: var(--bg-medium);
-    border-bottom: 2px solid var(--border-color);
+.table-products {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
 }
 
-.products-table th {
-    padding: var(--spacing-md);
+/* ===== ENCABEZADO ===== */
+.table-products thead {
+    background: transparent;
+}
+
+.table-products thead tr {
+    border-bottom: 1px solid #2d2d2d;
+}
+
+.table-products th {
+    padding: 15px 20px;
     text-align: left;
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-secondary);
+    font-weight: 700;
+    color: #F5A962;
+    font-size: 12px;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    font-size: var(--font-size-xs);
-    letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
-.products-table tbody tr {
-    border-bottom: 1px solid var(--border-color);
-    transition: background var(--transition-fast);
+.table-products th:not(:last-child) {
+    border-right: 1px solid #2d2d2d;
 }
 
-.products-table tbody tr:hover {
-    background: var(--bg-medium);
+/* ===== CUERPO DE LA TABLA ===== */
+.table-products tbody tr {
+    background: transparent;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #2d2d2d;
 }
 
-.products-table td {
-    padding: var(--spacing-md);
-    color: var(--text-primary);
+.table-products tbody tr:hover {
+    background: rgba(245, 169, 98, 0.05);
+}
+
+.table-products tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table-products td {
+    padding: 15px 20px;
+    color: #ccc;
+    font-size: 13px;
     vertical-align: middle;
 }
 
-/* Columna de producto */
+.table-products td:not(:last-child) {
+    border-right: 1px solid #2d2d2d;
+}
+
+/* ===== COLUMNAS ESPECÍFICAS ===== */
+
+/* Columna de Producto - se adapta al contenido */
+.col-product {
+    width: auto;
+    min-width: 200px;
+    text-align: left;
+}
+
+/* Columna de Juego */
+.col-game {
+    width: auto;
+    text-align: center;
+}
+
+/* Columna de Stock */
+.col-stock {
+    width: auto;
+    text-align: center;
+}
+
+/* Columnas de Precio - tamaño moderado */
+.col-price {
+    width: auto;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Columna de Diferencia */
+.col-diff {
+    width: auto;
+    text-align: center;
+}
+
+/* Columna de Acciones */
+.col-actions {
+    width: auto;
+    text-align: center;
+}
+
+/* ===== CONTENIDO DE CELDAS ===== */
+
+/* Información del Producto */
 .product-info {
     display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.product-image {
-    width: 50px;
-    height: 50px;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-    background: var(--bg-light);
-    border: 1px solid var(--border-color);
-}
-
-.product-image-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 4px;
-    background: #2d2d2d;
-    border: 1px solid #3f3f3f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #999999;
-    font-size: 1.25rem;
-}
-
-.product-details {
-    flex: 1;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .product-name {
-    font-weight: var(--font-weight-medium);
-    color: var(--text-primary);
-    margin-bottom: 2px;
+    font-weight: 600;
+    color: #ffffff;
+    font-size: 14px;
+    line-height: 1.6;
+    display: block;
 }
 
 .product-sku {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
+    font-size: 11px;
+    color: #888;
+    font-weight: 400;
 }
 
-/* Columna de precio */
-.price-cell {
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-base);
+/* Valores de Precio */
+.price-value {
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 15px;
+    display: inline-block;
 }
 
-/* Acciones */
-.actions-cell {
+/* ===== BADGES ===== */
+
+/* Badge de Juego */
+.badge-game {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.badge-magic {
+    background: rgba(138, 43, 226, 0.15);
+    color: #b085ff;
+    border: 1px solid rgba(176, 133, 255, 0.3);
+}
+
+.badge-pokemon {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.badge-onepiece {
+    background: rgba(255, 69, 0, 0.15);
+    color: #ff6347;
+    border: 1px solid rgba(255, 99, 71, 0.3);
+}
+
+.badge-gundam {
+    background: rgba(0, 191, 255, 0.15);
+    color: #00bfff;
+    border: 1px solid rgba(0, 191, 255, 0.3);
+}
+
+.badge-riftbound {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Badge de Stock */
+.badge-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.stock-high {
+    background: rgba(34, 197, 94, 0.15);
+    color: #52D16A;
+    border: 1px solid rgba(82, 209, 106, 0.3);
+}
+
+.stock-medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.stock-low {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.stock-out {
+    background: rgba(107, 114, 128, 0.15);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.badge-stock i {
+    font-size: 12px;
+}
+
+/* Badge de Diferencia de Precio */
+.badge-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.price-higher {
+    background: rgba(231, 76, 60, 0.15);
+    color: #E74C3C;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.price-lower {
+    background: rgba(82, 209, 106, 0.15);
+    color: #52D16A;
+    border: 1px solid rgba(82, 209, 106, 0.3);
+}
+
+.price-equal {
+    background: rgba(107, 114, 128, 0.15);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.badge-price i {
+    font-size: 12px;
+}
+
+/* ===== ACCIONES ===== */
+.actions-group {
     display: flex;
-    gap: var(--spacing-sm);
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
 }
 
 .btn-action {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-xs);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-color);
-    background: var(--bg-medium);
-    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 25px;
+    border: none;
+    background-color: #F5A962;
+    color: #1a1a1a;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.3s ease;
+    font-size: 13px;
 }
 
 .btn-action:hover {
-    background: var(--bg-light);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    background-color: #f7b578;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(245, 169, 98, 0.3);
+}
+
+.btn-action:active {
+    transform: translateY(0);
+}
+
+.btn-action i {
+    font-size: 13px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+/* Tablets y pantallas medianas (768px - 1024px) */
+@media (max-width: 1024px) {
+    .table-products-wrapper {
+        border-radius: 20px;
+    }
+    
+    .table-products th,
+    .table-products td {
+        padding: 12px 16px;
+    }
+    
+    .product-name {
+        font-size: 13px;
+    }
+    
+    .price-value {
+        font-size: 14px;
+    }
+    
+    .badge-game,
+    .badge-stock,
+    .badge-price {
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+}
+
+/* iPad y tablets (768px) */
+@media (max-width: 768px) {
+    .table-products-wrapper {
+        border-radius: 15px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .table-products {
+        min-width: 700px;
+    }
+    
+    .table-products th,
+    .table-products td {
+        padding: 12px 14px;
+        font-size: 12px;
+    }
+    
+    .table-products th {
+        font-size: 11px;
+    }
+    
+    .product-name {
+        font-size: 12px;
+    }
+    
+    .product-sku {
+        font-size: 10px;
+    }
+    
+    .price-value {
+        font-size: 13px;
+    }
+    
+    .badge-game,
+    .badge-stock,
+    .badge-price {
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    
+    .btn-action i {
+        font-size: 12px;
+    }
+}
+
+/* Móviles (iPhone 11, 12, 13, 14, 15 - 375px - 430px) */
+@media (max-width: 576px) {
+    .table-products-wrapper {
+        border-radius: 10px;
+    }
+    
+    .table-products {
+        min-width: 650px;
+    }
+    
+    .table-products th,
+    .table-products td {
+        padding: 10px 12px;
+        font-size: 11px;
+    }
+    
+    .table-products th {
+        font-size: 10px;
+        letter-spacing: 0.5px;
+    }
+    
+    .product-name {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+    
+    .product-sku {
+        font-size: 9px;
+    }
+    
+    .price-value {
+        font-size: 12px;
+    }
+    
+    .badge-game,
+    .badge-stock,
+    .badge-price {
+        padding: 5px 10px;
+        font-size: 9px;
+    }
+    
+    .btn-action {
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
+    }
+    
+    .btn-action i {
+        font-size: 11px;
+    }
+    
+    .actions-group {
+        gap: 6px;
+    }
+}
+
+/* iPhone SE y pantallas muy pequeñas (320px - 375px) */
+@media (max-width: 375px) {
+    .table-products {
+        min-width: 600px;
+    }
+    
+    .table-products th,
+    .table-products td {
+        padding: 8px 10px;
+    }
+    
+    .product-name {
+        font-size: 10px;
+    }
+    
+    .price-value {
+        font-size: 11px;
+    }
+}
+
+/* Pantallas grandes (1440px+) */
+@media (min-width: 1440px) {
+    .table-products-wrapper {
+        border-radius: 35px;
+    }
+    
+    .table-products th,
+    .table-products td {
+        padding: 18px 24px;
+        font-size: 14px;
+    }
+    
+    .table-products th {
+        font-size: 13px;
+    }
+    
+    .product-name {
+        font-size: 15px;
+    }
+    
+    .product-sku {
+        font-size: 12px;
+    }
+    
+    .price-value {
+        font-size: 16px;
+    }
+    
+    .badge-game,
+    .badge-stock,
+    .badge-price {
+        padding: 10px 18px;
+        font-size: 12px;
+    }
+    
+    .btn-action {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .btn-action i {
+        font-size: 14px;
+    }
+}
+
+/* ===== SCROLL HORIZONTAL (móviles) ===== */
+@media (max-width: 768px) {
+    .table-products-wrapper::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .table-products-wrapper::-webkit-scrollbar-track {
+        background: #1a1a1a;
+    }
+    
+    .table-products-wrapper::-webkit-scrollbar-thumb {
+        background: #3f3f3f;
+        border-radius: 3px;
+    }
+    
+    .table-products-wrapper::-webkit-scrollbar-thumb:hover {
+        background: #525252;
+    }
 }

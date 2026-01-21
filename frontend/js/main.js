@@ -1,6 +1,6 @@
 /* ============================================
-   MAIN APPLICATION ENTRY POINT
-   ============================================ */
+    MAIN APPLICATION ENTRY POINT
+============================================ */
 
 import CONFIG from './config.js';
 import { showLoader, hideLoader } from './utils/loader.js';
