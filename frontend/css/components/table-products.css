@@ -54,6 +54,19 @@
     border: 1px solid var(--border-color);
 }
 
+.product-image-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    background: #2d2d2d;
+    border: 1px solid #3f3f3f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999999;
+    font-size: 1.25rem;
+}
+
 .product-details {
     flex: 1;
 }

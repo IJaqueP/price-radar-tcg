@@ -221,10 +221,10 @@ function renderProductsTable() {
             <td>
                 <div class="product-cell">
                     <img 
-                        src="${product.image_url || 'https://via.placeholder.com/50'}" 
+                        src="${product.image_url || ''}" 
                         alt="${product.title}"
                         class="product-image"
-                        onerror="this.src='https://via.placeholder.com/50?text=No+Image'"
+                        onerror="this.src=''"
                     />
                     <div class="product-info">
                         <span class="product-name" title="${product.title}">
@@ -566,7 +566,7 @@ function getMockProducts() {
             title: 'Magic: The Gathering - Murders at Karlov Manor Bundle',
             sku: 'MTG-MKM-BUNDLE',
             game: 'magic',
-            image_url: 'https://via.placeholder.com/50?text=MTG',
+            image_url: '',
             stock: 15,
             shopify_price: 45.99,
             market_price: 42.00,
@@ -577,7 +577,7 @@ function getMockProducts() {
             title: 'Pokemon TCG: Scarlet & Violet Temporal Forces Elite Trainer Box',
             sku: 'PKM-TEF-ETB',
             game: 'pokemon',
-            image_url: 'https://via.placeholder.com/50?text=PKM',
+            image_url: '',
             stock: 8,
             shopify_price: 52.99,
             market_price: 48.50,
@@ -588,7 +588,7 @@ function getMockProducts() {
             title: 'One Piece Card Game - Paramount War Booster Box',
             sku: 'OP-PW-BB',
             game: 'onepiece',
-            image_url: 'https://via.placeholder.com/50?text=OP',
+            image_url: '',
             stock: 120,
             shopify_price: 89.99,
             market_price: 95.00,
@@ -599,7 +599,7 @@ function getMockProducts() {
             title: 'Gundam Card Game - Booster Pack Set 01',
             sku: 'GND-BP01',
             game: 'gundam',
-            image_url: 'https://via.placeholder.com/50?text=GND',
+            image_url: '',
             stock: 45,
             shopify_price: 34.99,
             market_price: 32.00,
@@ -610,7 +610,7 @@ function getMockProducts() {
             title: 'Magic: The Gathering - Commander Masters Draft Booster Box',
             sku: 'MTG-CMM-DBB',
             game: 'magic',
-            image_url: 'https://via.placeholder.com/50?text=MTG',
+            image_url: '',
             stock: 3,
             shopify_price: 259.99,
             market_price: 245.00,
