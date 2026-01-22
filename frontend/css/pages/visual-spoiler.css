@@ -1,0 +1,334 @@
+/* ===========================================================
+    VISUAL SPOILER MTG - PAGE STYLES
+    Estilos específicos para la página de Visual Spoiler
+=========================================================== */
+
+:root {
+    --spoiler-bg: #0d1117;
+    --spoiler-card-bg: #161b22;
+    --spoiler-border: #30363d;
+    --spoiler-text: #c9d1d9;
+    --spoiler-text-secondary: #8b949e;
+    --spoiler-accent: #F5A962;
+    --spoiler-accent-hover: #f7b578;
+}
+
+body {
+    background: var(--spoiler-bg);
+    color: var(--spoiler-text);
+    padding-top: 56px;
+}
+
+/* ===========================================================
+    HEADER SECTION
+=========================================================== */
+.spoiler-header {
+    background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+    padding: 3rem 0 2rem;
+    border-bottom: 2px solid var(--spoiler-accent);
+    margin-bottom: 2rem;
+}
+
+.spoiler-heading {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.spoiler-subtitle {
+    font-size: 1.125rem;
+    color: var(--spoiler-text-secondary);
+    margin-bottom: 0;
+}
+
+.set-stats {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-badge {
+    background: var(--spoiler-card-bg);
+    border: 1px solid var(--spoiler-border);
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--spoiler-accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-badge i {
+    font-size: 1.25rem;
+}
+
+/* ===========================================================
+    FILTERS SECTION
+=========================================================== */
+.filters-section {
+    background: var(--spoiler-card-bg);
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--spoiler-border);
+}
+
+.filters-section .form-label {
+    font-weight: 600;
+    color: var(--spoiler-text);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filters-section .form-label i {
+    color: var(--spoiler-accent);
+    margin-right: 0.25rem;
+}
+
+.filters-section .form-select,
+.filters-section .form-control {
+    background: var(--spoiler-bg);
+    border: 1px solid var(--spoiler-border);
+    color: var(--spoiler-text);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.filters-section .form-select:focus,
+.filters-section .form-control:focus {
+    background: var(--spoiler-bg);
+    border-color: var(--spoiler-accent);
+    color: var(--spoiler-text);
+    box-shadow: 0 0 0 0.2rem rgba(245, 169, 98, 0.25);
+}
+
+.filters-section .form-select option {
+    background: var(--spoiler-card-bg);
+    color: var(--spoiler-text);
+}
+
+/* Color Filter Buttons */
+.color-filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.color-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--spoiler-border);
+    background: var(--spoiler-bg);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.color-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--spoiler-accent);
+}
+
+.color-btn.active {
+    border-color: var(--spoiler-accent);
+    background: var(--spoiler-accent);
+    transform: scale(1.1);
+}
+
+.mana-symbol {
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.mana-w { color: #f0f0f0; }
+.mana-u { color: #0e68ab; }
+.mana-b { color: #150b00; }
+.mana-r { color: #d32029; }
+.mana-g { color: #00733e; }
+.mana-c { color: #ccc; }
+
+.color-btn.active .mana-symbol {
+    color: #fff;
+}
+
+/* ===========================================================
+    CARDS SECTION
+=========================================================== */
+.cards-section {
+    padding: 2rem 0 4rem;
+    min-height: 60vh;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--spoiler-text-secondary);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--spoiler-text);
+}
+
+.empty-state p {
+    font-size: 1rem;
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.loading-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3rem;
+}
+
+.loading-state p {
+    margin-top: 1rem;
+    color: var(--spoiler-text-secondary);
+    font-size: 1.125rem;
+}
+
+/* ===========================================================
+    NAVBAR CUSTOMIZATION
+=========================================================== */
+.navbar-logo {
+    height: 32px;
+    width: auto;
+}
+
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--spoiler-accent) !important;
+}
+
+.dropdown-menu {
+    background: var(--spoiler-card-bg);
+    border: 1px solid var(--spoiler-border);
+}
+
+.dropdown-item {
+    color: var(--spoiler-text);
+    padding: 0.75rem 1.5rem;
+}
+
+.dropdown-item:hover {
+    background: var(--spoiler-bg);
+    color: var(--spoiler-accent);
+}
+
+.flag-icon {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+}
+
+/* ===========================================================
+    MODAL CUSTOMIZATION
+=========================================================== */
+.modal-content {
+    background: var(--spoiler-card-bg);
+    border: 1px solid var(--spoiler-border);
+    color: var(--spoiler-text);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--spoiler-border);
+}
+
+.modal-title {
+    color: var(--spoiler-accent);
+    font-weight: 700;
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+.card-details p {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.card-details strong {
+    color: var(--spoiler-accent);
+}
+
+/* ===========================================================
+    RESPONSIVE
+=========================================================== */
+@media (max-width: 768px) {
+    .spoiler-heading {
+        font-size: 1.75rem;
+    }
+
+    .spoiler-subtitle {
+        font-size: 0.9375rem;
+    }
+
+    .set-stats {
+        justify-content: flex-start;
+        margin-top: 1rem;
+    }
+
+    .stat-badge {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .filters-section {
+        padding: 1.5rem 0;
+    }
+
+    .color-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .mana-symbol {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .spoiler-header {
+        padding: 2rem 0 1.5rem;
+    }
+
+    .spoiler-heading {
+        font-size: 1.5rem;
+    }
+
+    .filters-section {
+        padding: 1rem 0;
+    }
+
+    .color-filter-buttons {
+        gap: 0.375rem;
+    }
+
+    .color-btn {
+        width: 32px;
+        height: 32px;
+    }
+}

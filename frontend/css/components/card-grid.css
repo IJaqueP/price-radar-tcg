@@ -1,0 +1,183 @@
+/* ===========================================================
+    CARD GRID - VISUAL SPOILER MTG
+    Grid responsive para mostrar cartas estilo mythicspoiler
+=========================================================== */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+/* ===========================================================
+    CARD ITEM
+=========================================================== */
+.card-item {
+    background: var(--spoiler-card-bg, #161b22);
+    border: 1px solid var(--spoiler-border, #30363d);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.card-item:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(245, 169, 98, 0.3);
+    border-color: var(--spoiler-accent, #F5A962);
+}
+
+/* Card Image */
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 139.5%; /* Aspect ratio 2.5:3.5 (cartas MTG) */
+    overflow: hidden;
+    background: #0d1117;
+}
+
+.card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.card-item:hover .card-image {
+    transform: scale(1.05);
+}
+
+/* Loading placeholder */
+.card-image-wrapper.loading {
+    background: linear-gradient(
+        90deg,
+        #161b22 25%,
+        #1f2937 50%,
+        #161b22 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Card Info (opcional, si quieres mostrar nombre debajo) */
+.card-info {
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.card-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--spoiler-text, #c9d1d9);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card-number {
+    font-size: 0.75rem;
+    color: var(--spoiler-text-secondary, #8b949e);
+    margin-top: 0.25rem;
+}
+
+/* Rarity indicator (punto de color en la esquina) */
+.rarity-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    z-index: 10;
+}
+
+.rarity-common { background: #1e1e1e; }
+.rarity-uncommon { background: #c0c0c0; }
+.rarity-rare { background: #ffd700; }
+.rarity-mythic { background: #ff8c00; }
+
+/* ===========================================================
+    RESPONSIVE GRID
+=========================================================== */
+
+/* Desktop grande (1440px+) - 6 columnas */
+@media (min-width: 1440px) {
+    .cards-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 2rem;
+    }
+}
+
+/* Desktop (1024px - 1439px) - 5 columnas */
+@media (min-width: 1024px) and (max-width: 1439px) {
+    .cards-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+/* Tablet landscape (768px - 1023px) - 4 columnas */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .cards-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+/* Tablet portrait (576px - 767px) - 3 columnas */
+@media (min-width: 576px) and (max-width: 767px) {
+    .cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+}
+
+/* Mobile (hasta 575px) - 2 columnas */
+@media (max-width: 575px) {
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .card-item {
+        border-radius: 8px;
+    }
+
+    .card-info {
+        padding: 0.5rem;
+    }
+
+    .card-name {
+        font-size: 0.75rem;
+    }
+
+    .card-number {
+        font-size: 0.6875rem;
+    }
+
+    .rarity-indicator {
+        width: 10px;
+        height: 10px;
+        top: 6px;
+        right: 6px;
+    }
+}
+
+/* iPhone SE y muy pequeños - 2 columnas más compactas */
+@media (max-width: 375px) {
+    .cards-grid {
+        gap: 0.5rem;
+    }
+}
