@@ -83,7 +83,8 @@ app.get('/', (req, res) => {
             status: 'active',
             endpoints: {
                 health: '/api/health',
-                products: '/api/products'
+                products: '/api/products',
+                mtg: '/api/mtg'
             }
         }
     );
@@ -105,6 +106,10 @@ app.use('/api/shopify', shopifyRoutes);
 // Rutas de productos
 const productRoutes = require('./routes/products');
 app.use('/api/products', productRoutes);
+
+// Rutas de MTG (Magic: The Gathering)
+const mtgRoutes = require('./routes/mtg');
+app.use('/api/mtg', mtgRoutes);
 
 
 // ===========================================================
@@ -130,12 +135,10 @@ module.exports = app;
 // INICIAR CRON JOBS
 // ===========================================================
 
-/*
-const { startCronJobs } = require('./jobs/syncJob');
+const { startMtgSyncCron } = require('./jobs/mtgSyncCron');
 
-// Iniciará cron jobs si no estamos en modo test
-if (process.env.NODE_ENV !== 'test') {
-    startCronJobs();
+// Iniciar cron job de MTG en producción
+if (process.env.NODE_ENV === 'production') {
+    startMtgSyncCron();
+    console.log('✅ Cron jobs MTG iniciados');
 }
-
-*/
