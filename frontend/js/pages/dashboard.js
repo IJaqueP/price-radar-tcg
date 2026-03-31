@@ -170,12 +170,10 @@ async function initDashboard() {
 async function loadProducts() {
     try {
         showLoader();
-        
-        // TODO: Cuando el backend tenga el endpoint /products/alerts
-        // const response = await api.get('/products/alerts');
-        
-        // TEMPORAL: Usar datos de ejemplo
-        const response = getMockProducts();
+
+        const response = await api.getProductAlerts({
+            limit: 200
+        });
         
         currentProducts = response.products || [];
         
@@ -239,12 +237,12 @@ function renderProductsTable() {
             
             <!-- Precio Shopify -->
             <td class="col-price">
-                <span class="price-value">$${formatPrice(product.shopify_price)}</span>
+                <span class="price-value">$${formatPriceCLP(product.shopify_price)}</span>
             </td>
             
-            <!-- Precio Mercado -->
+            <!-- Precio Mercado (CLP convertido) -->
             <td class="col-price">
-                <span class="price-value">$${formatPrice(product.market_price)}</span>
+                <span class="price-value">$${formatPriceCLP(product.market_price)}</span>
             </td>
             
             <!-- Diferencia -->
@@ -487,6 +485,10 @@ function formatPrice(price) {
     return parseFloat(price).toFixed(2);
 }
 
+function formatPriceCLP(price) {
+    return Math.round(parseFloat(price)).toLocaleString('es-CL');
+}
+
 function getGameLabel(game) {
     const labels = {
         magic: 'Magic',
@@ -515,11 +517,11 @@ function getPriceDiffBadge(difference) {
     const absValue = Math.abs(diff).toFixed(1);
     
     if (diff > 0) {
-        return `<span class="badge-price price-higher"><i class="bi bi-arrow-up"></i> +${absValue}%</span>`;
+        return `<span class="badge-price price-higher" title="Nuestro precio es mayor que el de API"><i class="bi bi-arrow-up"></i> +${absValue}% sobre API</span>`;
     } else if (diff < 0) {
-        return `<span class="badge-price price-lower"><i class="bi bi-arrow-down"></i> ${absValue}%</span>`;
+        return `<span class="badge-price price-lower" title="Nuestro precio es menor que el de API"><i class="bi bi-arrow-down"></i> ${absValue}% bajo API</span>`;
     } else {
-        return `<span class="badge-price price-equal"><i class="bi bi-dash"></i> 0%</span>`;
+        return `<span class="badge-price price-equal"><i class="bi bi-dash"></i> 0% igual API</span>`;
     }
 }
 

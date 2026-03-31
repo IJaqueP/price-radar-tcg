@@ -6,7 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { sequelize } = require('../models');
+const { sequelize } = require('../config/database');
 const logger = require('../utils/logger');
 
 

@@ -8,6 +8,9 @@ const Product = require('./Product');
 const ProductMapping = require('./ProductMapping');
 const PriceComparison = require('./PriceComparison');
 const SyncHistory = require('./SyncHistory');
+const ShopifyProduct = require('./ShopifyProduct');
+const SkuMapping = require('./SkuMapping');
+const SealedProductMapping = require('./SealedProductMapping');
 
 // ===========================================================
 // DEFINIR RELACIONES
@@ -33,6 +36,26 @@ PriceComparison.belongsTo(Product, {
     as: 'product'
 });
 
+// ShopifyProduct <-> SkuMapping (1:1)
+ShopifyProduct.hasOne(SkuMapping, {
+    foreignKey: 'shopify_product_id',
+    as: 'sku_mapping'
+});
+SkuMapping.belongsTo(ShopifyProduct, {
+    foreignKey: 'shopify_product_id',
+    as: 'shopify_product'
+});
+
+// ShopifyProduct <-> SealedProductMapping (1:1)
+ShopifyProduct.hasOne(SealedProductMapping, {
+    foreignKey: 'shopify_product_id',
+    as: 'sealed_mapping'
+});
+SealedProductMapping.belongsTo(ShopifyProduct, {
+    foreignKey: 'shopify_product_id',
+    as: 'shopify_product'
+});
+
 
 // ===========================================================
 // EXPORTAR
@@ -42,5 +65,8 @@ module.exports = {
     Product,
     ProductMapping,
     PriceComparison,
-    SyncHistory
+    SyncHistory,
+    ShopifyProduct,
+    SkuMapping,
+    SealedProductMapping
 };

@@ -6,10 +6,24 @@
 const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
+const sealedProductsController = require('../controllers/sealedProductsController');
 
 
 // ===========================================================
-// RUTAS DE PRODUCTOS
+// RUTAS DE PRODUCTOS SELLADOS
+// ===========================================================
+
+/*
+    GET /api/products/sealed/:game
+    Obtiene productos sellados por juego
+    Params: game (magic, pokemon, onepiece, gundam, riftbound, accessory)
+    Query: search, page, limit, sort, order
+*/
+router.get('/sealed/:game', sealedProductsController.getSealedProductsByGame);
+
+
+// ===========================================================
+// RUTAS DE PRODUCTOS (GENERAL)
 // ===========================================================
 
 /*
@@ -37,10 +51,10 @@ router.get('/:id', productController.getProductDetail);
 
 /*
     PATCH /api/products/:id/price
-    Actualiza el precio de un producto en Shopify
+    Actualiza el precio de un producto en Shopify (BD + Shopify)
     Body: { new_price: number }
 */
-router.patch('/:id/price', productController.updateProductPrice);
+router.patch('/:id/price', sealedProductsController.updateProductPrice);
 
 
 /*

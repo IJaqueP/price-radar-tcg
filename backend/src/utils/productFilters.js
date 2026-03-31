@@ -214,7 +214,7 @@ function categorizeProduct(product) {
         'page'
     ];
     if (accessoryKeywords.some(keyword => text.includes(keyword))) {
-        return 'accesory';
+        return 'accessory';
     }
 
     return 'other';

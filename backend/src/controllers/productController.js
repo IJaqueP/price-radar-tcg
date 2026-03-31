@@ -4,10 +4,11 @@
     Controlador para manejo de productos y alertas de precios
 */
 
-const { where } = require('sequelize');
-const { Product, ProductMapping, PriceComparison } = require('../models');
+const { Op } = require('sequelize');
+const { Product, ProductMapping, PriceComparison, SealedProductMapping, ShopifyProduct } = require('../models');
 const priceComparisonService = require('../services/priceComparisonService');
 const shopifyService = require('../services/shopifyService');
+const { usdToClp } = require('../services/currencyService');
 const logger = require('../utils/logger');
 
 // ===========================================================
@@ -21,52 +22,129 @@ const logger = require('../utils/logger');
 async function getProductAlerts(req, res) {
     try {
         const { game, category, limit = 50 } = req.query;
+        const threshold = parseFloat(process.env.PRICE_THRESHOLD_PERCENTAGE) || 3;
 
         logger.info('Obteniendo productos con alertas', { game, category });
 
-        
-        // Obtener productos con alertas
-        const products = await priceComparisonService.getProductsWithAlerts(
-            {
-                game,
-                category
-            }
-        );
+        // Mapear filtro de juego del frontend a valores de reconciliación
+        const gameFilterMap = {
+            magic: ['magic-the-gathering', 'mtg'],
+            pokemon: ['pokemon'],
+            onepiece: ['one-piece-card-game'],
+            gundam: ['gundam'],
+            riftbound: ['riftbound']
+        };
 
+        const whereMapping = {};
+        if (game && gameFilterMap[game]) {
+            whereMapping.game = { [Op.in]: gameFilterMap[game] };
+        }
 
-        // Limitar resultados
-        const limitedProducts = products.slice(0, parseInt(limit));
+        if (category) {
+            whereMapping.product_type = category;
+        }
 
-
-        // Formatear respuesta
-        const formattedProducts = limitedProducts.map(product => {
-            const latestComparison = product.price_comparisons[0];
-
-            return {
-                id: product.id,
-                title: product.title,
-                sku: product.variants?.[0]?.sku || 'N/A',
-                game: product.game,
-                category: product.category,
-                image_url: product.image_url,
-                stock: product.inventory_quantity,
-                shopify_price: parseFloat(product.price),
-                market_price: parseFloat(latestComparison.tcggo_price),
-                price_difference: parseFloat(latestComparison.price_difference_percentage),
-                last_comparison: latestComparison.comparison_date
-            };
+        const mappings = await SealedProductMapping.findAll({
+            where: whereMapping,
+            include: [
+                {
+                    model: ShopifyProduct,
+                    as: 'shopify_product',
+                    required: true,
+                    where: {
+                        status: 'active',
+                        inventory_quantity: { [Op.gt]: 0 }
+                    },
+                    attributes: [
+                        'id',
+                        'title',
+                        'shopify_sku',
+                        'inventory_quantity',
+                        'current_price',
+                        'product_type',
+                        'vendor',
+                        'raw_data'
+                    ]
+                }
+            ],
+            order: [['updatedAt', 'DESC']]
         });
 
+        const gameOutputMap = {
+            'magic-the-gathering': 'magic',
+            mtg: 'magic',
+            pokemon: 'pokemon',
+            'one-piece-card-game': 'onepiece',
+            gundam: 'gundam',
+            riftbound: 'riftbound'
+        };
 
-        // Obtener estadísticas
-        const stats = await priceComparisonService.getComparisonStats();
+        // Convertir precios de JustTCG (USD) a CLP
+        const formattedProducts = (await Promise.all(
+            mappings.map(async (mapping) => {
+                const product = mapping.shopify_product;
+                const marketPriceUsd = parseFloat(mapping.justtcg_price);
+                const shopifyPrice = parseFloat(product.current_price);
+
+                if (!Number.isFinite(marketPriceUsd) || !Number.isFinite(shopifyPrice) || marketPriceUsd === 0) {
+                    return null;
+                }
+
+                // Convertir precio de mercado de USD a CLP
+                const marketPriceClp = await usdToClp(marketPriceUsd);
+
+                // Recalcular diferencia con precios en la misma moneda (CLP)
+                const diff = ((shopifyPrice - marketPriceClp) / marketPriceClp) * 100;
+
+                if (!Number.isFinite(diff)) return null;
+
+                const imageUrl = product.raw_data?.images?.[0]?.src ||
+                    product.raw_data?.images?.[0]?.url ||
+                    product.raw_data?.image?.src ||
+                    product.raw_data?.image?.url ||
+                    null;
+
+                return {
+                    id: product.id,
+                    title: product.title,
+                    sku: product.shopify_sku || 'N/A',
+                    game: gameOutputMap[mapping.game] || mapping.game,
+                    category: mapping.product_type || product.product_type,
+                    image_url: imageUrl,
+                    stock: product.inventory_quantity,
+                    shopify_price: shopifyPrice,
+                    market_price: marketPriceClp,
+                    market_price_usd: marketPriceUsd,
+                    price_difference: parseFloat(diff.toFixed(1)),
+                    price_position: diff > 0 ? 'above_api' : diff < 0 ? 'below_api' : 'equal_api',
+                    confidence: parseFloat(mapping.match_confidence),
+                    match_method: mapping.match_method,
+                    last_comparison: mapping.last_updated || mapping.updatedAt
+                };
+            })
+        ))
+            .filter(Boolean)
+            .filter(item => Math.abs(item.price_difference) > threshold)
+            .sort((a, b) => Math.abs(b.price_difference) - Math.abs(a.price_difference))
+            .slice(0, parseInt(limit));
+
+        const stats = {
+            total_alerts: formattedProducts.length,
+            higher_prices: formattedProducts.filter(p => p.price_difference > 0).length,
+            lower_prices: formattedProducts.filter(p => p.price_difference < 0).length,
+            avg_difference: formattedProducts.length > 0
+                ? (formattedProducts.reduce((sum, p) => sum + Math.abs(p.price_difference), 0) / formattedProducts.length).toFixed(1)
+                : '0'
+        };
 
         res.json(
             {
                 success: true,
                 products: formattedProducts,
                 stats,
-                count: formattedProducts.length
+                count: formattedProducts.length,
+                threshold_percentage: threshold,
+                source: 'sealed_product_mappings'
             }
         );
 

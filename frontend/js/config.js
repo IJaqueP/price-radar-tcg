@@ -4,7 +4,7 @@
 
 const CONFIG = {
     // Backend API Base URL
-    API_BASE_URL: 'http://localhost:3000/api',
+    API_BASE_URL: 'http://127.0.0.1:3000/api',
 
     // API Endpoints
     ENDPOINTS: {
@@ -12,6 +12,11 @@ const CONFIG = {
         PRODUCTS_LIST: '/products/list',
         PRODUCT_UPDATE_PRICE: '/products/:id/price',
         SYNC_HISTORY: '/sync/history',
+        MTG_SEARCH: '/mtg/search',
+        MTG_SETS: '/mtg/sets',
+        MTG_SET_CARDS: '/mtg/sets/:setCode/cards',
+        MTG_AUTOCOMPLETE: '/mtg/autocomplete',
+        MTG_CARDS: '/mtg/cards',
     },
 
     // App Settings

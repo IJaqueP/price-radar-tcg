@@ -18,6 +18,9 @@
 const express = require('express');
 const cors = require('cors');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const syncRoutes = require('./routes/syncRoutes');
+const reconcileRoutes = require('./routes/reconcileRoutes');
+const sealedRoutes = require('./routes/sealedRoutes');
 
 // ===========================================================
 // CREAR APLICACIÓN EXPRESS
@@ -25,6 +28,7 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 // express() crea una instancia de la aplicación 
 const app = express();
+const shopifyWebhookRoutes = require('./routes/shopifyWebhooks');
 
 // ===========================================================
 // MIDDLEWARES GLOBALES
@@ -46,11 +50,16 @@ const app = express();
 // CORS: Permite que el frontend (otro dominio/puerto) haga peticiones al backend
 app.use(cors(
     {
-        origin: '*', // Permitir todos los orígenes (en producción, especificar dominio exacto)
-        methods: ['GET', 'POST', 'DELETE', 'PATCH'],
-        allowedHeaders: ['Content-Type', 'Authorization']
+        origin: '*',
+        methods: ['GET', 'POST', 'DELETE', 'PATCH', 'PUT', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
+        credentials: false,
+        maxAge: 86400
     }
 ));
+
+// Webhooks de Shopify requieren body raw para validar firma HMAC.
+app.use('/api/shopify/webhooks', shopifyWebhookRoutes);
 
 // JSON Parser: Convierte el body de las peticiones JSON a objeto JavaScript
 // Ejemplo: { "name": "Charizard" } -> req.body.name === "Charizard"
@@ -90,6 +99,15 @@ app.get('/', (req, res) => {
     );
 });
 
+// Test endpoint simple
+app.get('/api/test', (req, res) => {
+    res.json({
+        success: true,
+        message: 'Backend is working!',
+        timestamp: new Date().toISOString()
+    });
+});
+
 
 // ===========================================================
 // IMPORTAR Y USAR RUTAS DE LA API
@@ -111,6 +129,14 @@ app.use('/api/products', productRoutes);
 const mtgRoutes = require('./routes/mtg');
 app.use('/api/mtg', mtgRoutes);
 
+// Ruta de sincronización con Shopify
+app.use('/api/sync', syncRoutes);
+
+// Rutas de reconciliación SKU
+app.use('/api/reconcile', reconcileRoutes);
+
+// Rutas de reconciliación de productos sellados
+app.use('/api/sealed', sealedRoutes);
 
 // ===========================================================
 // MANEJO DE ERRORES GLOBALES

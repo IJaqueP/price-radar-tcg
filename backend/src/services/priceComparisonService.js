@@ -8,7 +8,6 @@
 const { Product, PriceComparison } = require('../models');
 const tcggoService = require('./tcggoService');
 const logger = require('../utils/logger');
-const { parse } = require('dotenv');
 
 // ===========================================================
 // COMPARAR PRECIOS DE UN PRODUCTO
@@ -27,7 +26,7 @@ async function compareProductPrice(product) {
         const mapping = await product.getMapping();
 
         if (!mapping || !mapping.tcggo_id) {
-            logger.warning(`Producto ${product.id} no tiene mapeo a TCGGO`);
+            logger.warn(`Producto ${product.id} no tiene mapeo a TCGGO`);
             return {
                 success: false,
                 reason: 'no_mapping',
@@ -40,7 +39,7 @@ async function compareProductPrice(product) {
         const marketPrice = await tcggoService.getProductPrice(mapping.tcggo_id);
 
         if (!marketPrice || !marketPrice.avg_price) {
-            logger.warning(`No se pudo obtener precio de mercado para ${product.title}`);
+            logger.warn(`No se pudo obtener precio de mercado para ${product.title}`);
             return {
                 success: false,
                 reason: 'no_market_price',

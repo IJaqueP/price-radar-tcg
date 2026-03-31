@@ -6,393 +6,574 @@
 */
 
 const axios = require('axios');
-const { shopifyConfig, validateConfig } = require('../config/shopify');
+require('dotenv').config();
 
-// ===========================================================
-// VALIDAR CONEXIÓN
-// ===========================================================
+class ShopifyService {
+    constructor() {
+        this.storeUrl = process.env.SHOPIFY_STORE_URL;
+        this.accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+        this.apiVersion = process.env.SHOPIFY_API_VERSION;
+        this.baseUrl = `https://${this.storeUrl}/admin/api/${this.apiVersion}`;
 
-/*
-    Verifica que las credenciales de Shopify estén configuradas
-    @throws {Error} si las credenciales no son válidas
-*/
-function ensureConfigured() {
-    const validation = validateConfig();
-
-    if (!validation.valid) {
-        throw new Error(
-            'Shopify no está configurado correctamente:\n' +
-            validation.errors.join('\n')
-        );
+        // Configuración de rate limiting
+        this.maxRetries = 3;
+        this.retryDelay = 1000; // 1 segundo
     }
-}
 
-// ===========================================================
-// FUNCIÓN GENÉRICA PARA GRAPHQL QUERIES
-// ===========================================================
+    /**
+     * Realiza una consulta GraphQL a Shopify
+     * @param {string} query - Query GraphQl
+     * @param {object} variables - Variables para la query
+     * @returns {Promise<Object>} - Respuesta de Shopify
+     */
 
-/*
-    Ejecuta una query GraphQL en Shopify
-    @param {string} query - Query GraphQL
-    @param {Object} variables - Variables para la query
-    @returns {Promise<Object>} Respuesta de GraphQL
-*/
-async function executeGraphQL(query, variables = {}) {
-    ensureConfigured();
+    async graphqlQuery(query, variables = {}) {
+        try {
+            const response = await axios.post(
+                `${this.baseUrl}/graphql.json`,
+                {
+                    query,
+                    variables
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Access-Token': this.accessToken
+                    }
+                }
+            );
 
-    try {
-        const response = await axios.post(
-            shopifyConfig.graphqlUrl,
-            {
-                query,
-                variables
-            },
-            {
-                headers: shopifyConfig.headers,
-                timeout: 30000
+            // Verificar errores de GraphQL
+            if (response.data.errors) {
+                console.error('GraphQL Errors:', response.data.errors);
+                throw new Error(JSON.stringify(response.data.errors));
             }
-        );
 
-        // Verificar errores de GraphQL
-        if (response.data.errors) {
-            throw new Error(
-                'GraphQL Errors: ' + JSON.stringify(response.data.errors, null, 2)
-            );
-        }
+            // Verificar rate limiting
+            if (response.data.extensions?.cost) {
+                const { currentlyAvailable, maximumAvailable } = response.data.extensions.cost.throttleStatus;
+                console.log(`Rate Limit: ${currentlyAvailable}/${maximumAvailable}`);
 
-        return response.data.data;
-    
-    } catch (error) {
-        console.error('❌ Error en GraphQL query:', error.message);
+                // Si queda menos del 10%, esperar un segundo
+                if (currentlyAvailable < maximumAvailable * 0.1) {
+                    console.log('Rate limit bajo, esperando 1 segundo...');
+                    await this.sleep(1000);
+                }
+            }
 
-        if (error.response) {
-            throw new Error(
-                `Shopify GraphQL error ${error.response.status}: ${JSON.stringify(error.response.data)}`
-            );
-        } else if (error.request) {
-            throw new Error('No se pudo contectar con Shopify. Verificar conexión a internet')
-        } else {
+            return response.data.data;
+
+        } catch (error) {
+            console.error('Error en GraphQL query:', error.message);
             throw error;
         }
-    } 
-}
+    }
 
+    /**
+     * Obtiene TODOS los productos de Shopify con paginación
+     * @returns {Promise<Array>} - Array de productos
+     */
 
-// ===========================================================
-// OBTENER PRODUCTOS
-// ===========================================================
+    async getAllProducts() {
+        console.log('🛜 Iniciando obtención de productos de Shopify');
 
-/*
-    Obtiene productos de Shopify con paginación
+        let allProducts = [];
+        let hasNextPage = true;
+        let cursor = null;
+        let pageCount = 0;
 
-    IMPORTANTE: Shopify devuelve máximo 250 productos por request.
-    Si tienes 250+ productos, necesita hacer múltiples request.
-
-    @param {Object} options - Opciones de filtrado
-    @param {number} options.first - Cantidad de productos (máx 250)
-    @param {string} options.after - Cursor para paginación
-    @param {string} options.query - Query de búsqueda (opcional)
-    @returns {Promise<Object>} Productos y pageInfo
-*/
-async function getProducts(options = {}) {
-    const { first = 250, after = null, query = null } = options;
-
-    // Query GraphQL
-    const graphqlQuery = `
-        query getProducts($first: Int!, $after: String, $query: String) {
-            products(first: $first, after: $after, query: $query) {
-                edges {
-                    node {
-                        id
-                        legacyResourceId
-                        title
-                        vendor
-                        productType
-                        tags
-                        status
-                        createdAt
-                        updatedAt
-                        handle
-                        featuredImage {
-                            url
-                        }
-
-                        variants(first: 10) {
-                            edges {
-                                node {
-                                    id
-                                    legacyResourceId
-                                    sku
-                                    price
-                                    compareAtPrice
-                                    inventoryQuantity
-                                    barcode
+        const query = `
+            query GetProducts($cursor: String) {
+                products(first: 250, after: $cursor) {
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                    edges {
+                        cursor
+                        node {
+                            id
+                            title
+                            status
+                            productType
+                            vendor
+                            createdAt
+                            updatedAt
+                            collections(first: 10) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        handle
+                                    }
+                                }
+                            }
+                            variants(first: 100) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        sku
+                                        barcode
+                                        price
+                                        inventoryQuantity
+                                        availableForSale
+                                    }
                                 }
                             }
                         }
                     }
-                    cursor
                 }
-            pageInfo {
-                hasNextPage
-                endCursor
             }
-        }
-    }
-    `;
+        `;
 
-    const variables = {
-        first,
-        after,
-        query
-    };
+        try {
+            while (hasNextPage) {
+                pageCount++;
+                console.log(`🗒️ Obteniendo página ${pageCount}`);
 
-    console.log(`📡 Consultando Shopify GraphQL: ${first} productos${after ? ' (página siguiente)' : ''}`);
+                const data = await this.graphqlQuery(query, { cursor });
 
-    const data = await executeGraphQL(graphqlQuery, variables);
+                const products = data.products.edges;
+                allProducts = allProducts.concat(products);
 
-    console.log(`🆗 Obtenidos ${data.products.edges.length} productos`);
+                hasNextPage = data.products.pageInfo.hasNextPage;
+                cursor = data.products.pageInfo.endCursor;
 
-    return {
-        products: data.products.edges.map(edge => formatProduct(edge.node)),
-        pageInfo: data.products.pageInfo
-    };
-}
+                console.log(`   🆗 ${products.length} productos obtenidos (Total: ${allProducts.length})`);
 
-
-/*
-    Obtiene TODOS los productos usando paginación cursor-based
-    @param {Object} options - Opciones de filtrado
-    @returns {Promise<Array>} Todos los productos
-*/
-async function getAllProducts(options = {}) {
-    ensureConfigured();
-
-    let allProducts = [];
-    let hasNextPage = true;
-    let cursor = null;
-    let pageCount = 0;
-
-    console.log('📦 Iniciando obtención de todos los productos con GraphQL');
-
-    while (hasNextPage) {
-        pageCount++;
-        console.log(`🗒️ Obteniendo página ${pageCount}`);
-
-        const result = await getProducts(
-            {
-                first: 250,
-                after: cursor,
-                query: options.query || null
+                // Pequeño delay entre páginas para ser respetuosos con la API
+                if (hasNextPage) {
+                    await this.sleep(200);
+                }
             }
-        );
 
-        allProducts = allProducts.concat(result.products);
+            console.log(`\n🆗 COMPLETADO: ${allProducts.length} productos totales desde Shopify`);
+            return allProducts;
 
-        hasNextPage = result.pageInfo.hasNextPage;
-        cursor = result.pageInfo.endCursor;
 
-        // Pausa de 500mx entre requests (rate limitng)
-        if (hasNextPage) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+            console.error('❌ Error obteniendo productos:', error.message);
+            throw error;
         }
     }
 
-    console.log(`🆗 Total de productos obtenidos: ${allProducts.length}`);
+    /**
+     * Obtiene productos de Shopify filtrados por query (product_type, title, etc.)
+     * Usa la sintaxis de búsqueda de Shopify: https://shopify.dev/docs/api/usage/search-syntax
+     * Ejemplo: getProductsByQuery('product_type:Sealed*')
+     * @param {string} shopifyQuery - Filtro de búsqueda
+     * @returns {Promise<Array>} - Array de productos raw
+     */
+    async getProductsByQuery(shopifyQuery) {
+        console.log(`🛜 Obteniendo productos de Shopify [query: "${shopifyQuery}"]`);
 
-    return allProducts;
-}
+        let allProducts = [];
+        let hasNextPage = true;
+        let cursor = null;
+        let pageCount = 0;
 
-/*
-    Obtiene un producto específico por ID
-    @param {string} productId - ID de GraphQL (gid://shopify/Product/123) o legacy ID
-    @returns {Promise<Object>} Producto
-*/  
-async function getProductById(productId) {
-    ensureConfigured();
-
-    // Convertir legacy ID a GraphQL si es necesario
-    const gid = productId.includes('gid://')
-    ? productId
-    : `gid://shopify/Product/${productId}`;
-
-    const query = `
-        query getProduct($id: ID!) {
-            product(id: $id) {
-            id
-            legacyResourceId
-            title
-            vendor
-            productType
-            tags
-            status
-            createdAt
-            updatedAt
-            handle
-            featuredImage {
-                url
-            }
-
-            variants(first: 10) {
-                edges {
-                    node {
-                        id
-                        legacyResourceId
-                        sku
-                        price
-                        compareAtPrice
-                        inventoryQuantity
-                        barcode
+        const gqlQuery = `
+            query GetFilteredProducts($cursor: String, $queryStr: String) {
+                products(first: 250, after: $cursor, query: $queryStr) {
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                    edges {
+                        node {
+                            id
+                            title
+                            status
+                            productType
+                            vendor
+                            createdAt
+                            updatedAt
+                            collections(first: 10) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        handle
+                                    }
+                                }
+                            }
+                            variants(first: 100) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        sku
+                                        barcode
+                                        price
+                                        inventoryQuantity
+                                        availableForSale
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
+        `;
+
+        try {
+            while (hasNextPage) {
+                pageCount++;
+                console.log(`🗒️ Página ${pageCount}`);
+
+                const data = await this.graphqlQuery(gqlQuery, { cursor, queryStr: shopifyQuery });
+
+                const products = data.products.edges;
+                allProducts = allProducts.concat(products);
+
+                hasNextPage = data.products.pageInfo.hasNextPage;
+                cursor = data.products.pageInfo.endCursor;
+
+                console.log(`   🆗 ${products.length} productos (Total: ${allProducts.length})`);
+
+                if (hasNextPage) {
+                    await this.sleep(200);
+                }
             }
+
+            console.log(`\n🆗 COMPLETADO: ${allProducts.length} productos con query "${shopifyQuery}"`);
+            return allProducts;
+
+        } catch (error) {
+            console.error('❌ Error obteniendo productos por query:', error.message);
+            throw error;
         }
-    `;
-
-    const data = await executeGraphQL(query, { id: gid });
-
-    if (!data.product) {
-        throw new Error(`Producto ${productId} no encontrado`);
     }
 
-    return formatProduct(data.product);
-}
+
+    /**
+     * Transforma datos desde Shopify a formato normalizado
+     * @param {Array} shopifyProducts - Productos raw de Shopify
+     * @returns {Array} - Productos normalizados
+     */
+
+    normalizeProducts(shopifyProducts) {
+        console.log('\n🛠️ Normalizando datos de productos');
+
+        const normalized = [];
+
+        for (const edge of shopifyProducts) {
+            const product = edge.node;
+            
+            // Extraer colecciones para luego identificar si es sealed
+            const collections = product.collections?.edges?.map(e => e.node.title) || [];
+
+            // Cada producto puede tener múltiples variantes
+            for (const variantEdge of product.variants.edges) {
+                const variant = variantEdge.node;
+                const normalizedSku = (variant.sku && String(variant.sku).trim()) || (variant.barcode && String(variant.barcode).trim()) || null;
+
+                normalized.push(
+                    {
+                        shopify_id: product.id,
+                        title: product.title,
+                        // Fallback a barcode para soportar tiendas que no usan SKU explícito.
+                        shopify_sku: normalizedSku,
+                        current_price: parseFloat(variant.price) || 0,
+                        variant_id: variant.id,
+                        variant_title: variant.title !== 'Default Title' ? variant.title : null,
+                        status: product.status.toLowerCase(),
+                        inventory_quantity: variant.inventoryQuantity || 0,
+                        product_type: product.productType || null,
+                        vendor: product.vendor || null,
+                        last_synced_at: new Date(),
+                        sku_validated: false,
+                        raw_data: {
+                            product: product,
+                            variant: variant,
+                            collections: collections
+                        }
+                    }
+                );
+            }
+        }
+
+        console.log(`🆗 ${normalized.length} variantes normalizadas`);
+        return normalized; 
+    }
 
 
-// ===========================================================
-// ACTUALIZA PRECIO (MUTATION)
-// ===========================================================
+    /**
+     * BÚSQUEDA DE PRODUCTOS POR TÍTULO
+     * 
+     * Busca un producto por título usando GraphQL query.
+     * Retorna detalles COMPLETOS del producto incluyendo:
+     * - Status (ACTIVE, DRAFT, ARCHIVED)
+     * - Variantes con inventario
+     * - Colecciones
+     * - Datos raw para análisis
+     * 
+     * @param {string} searchTitle - Título del producto a buscar
+     * @returns {Promise<Object|null>} - Producto encontrado o null si no existe
+     * @throws {Error} - Si hay error en la API
+     */
+    async searchProductByTitle(searchTitle) {
+        if (!searchTitle || typeof searchTitle !== 'string') {
+            throw new Error('searchTitle debe ser un string no vacío');
+        }
 
-/*
-    Actualiza el precio de un producto usando GraphQL Mutation
+        console.log(`\n🔍 Buscando producto: "${searchTitle}"`);
 
-    @param {string} variantId - ID de la variante (gis o legacy)
-    @param {number} newPrice - Nuevo precio
-    @returns {Promise<Object>} Variante actualizada
-*/
-async function updateProductPrice(variantId, newPrice) {
-    ensureConfigured();
+        // Importar helpers de búsqueda para normalizar (incluyendo comillas)
+        const { normalizeTitleForSearch } = require('../utils/searchHelpers');
+        const normalizedSearch = normalizeTitleForSearch(searchTitle);
+        
+        console.log(`   📝 Normalizado: "${normalizedSearch}"`);
 
-    // Convertir legacy ID a GraphQL si es necesario
-    const gid = variantId.includes('gid://')
-    ? variantId
-    : `gid://shopify/ProductVariant/${variantId}`;
+        // GraphQL query para buscar productos por título
+        // Nota: Shopify no tiene búsqueda SQL-like en GraphQL,
+        // entonces traemos productos y filtramos en memoria
+        const query = `
+            query SearchProducts($query: String!) {
+                products(first: 250, query: $query) {
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                    edges {
+                        node {
+                            id
+                            title
+                            status
+                            productType
+                            vendor
+                            createdAt
+                            updatedAt
+                            handle
+                            description
+                            collections(first: 10) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        handle
+                                    }
+                                }
+                            }
+                            variants(first: 100) {
+                                edges {
+                                    node {
+                                        id
+                                        title
+                                        sku
+                                        barcode
+                                        price
+                                        inventoryQuantity
+                                        availableForSale
+                                        createdAt
+                                        updatedAt
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
 
-    const mutation = `
-        mutation updateVariantPrice($input: ProductVariantInput!) {
-            productVariantUpdate(input: $input) {
-                productVariant {
+        try {
+            // Usar el parámetro query de Shopify para filtro inicial
+            // Shopify busca por coincidencia parcial en el título
+            const data = await this.graphqlQuery(query, { query: searchTitle });
+            
+            if (!data.products.edges || data.products.edges.length === 0) {
+                console.log(`   ❌ No se encontraron productos con: "${searchTitle}"`);
+                return null;
+            }
+
+            console.log(`   ✅ ${data.products.edges.length} producto(s) encontrado(s) por Shopify`);
+
+            // Ahora filtramos por coincidencia normalizada exacta en memoria
+            // normalizeTitleForSearch también remueve comillas especiales
+            for (const edge of data.products.edges) {
+                const product = edge.node;
+                const normalizedTitle = normalizeTitleForSearch(product.title);
+
+                console.log(`      - "${product.title}" -> "${normalizedTitle}"`);
+
+                // Comparar títulos normalizados (ignora comillas, acentos, caracteres especiales)
+                if (normalizedTitle === normalizedSearch) {
+                    console.log(`   ✨ COINCIDENCIA EXACTA ENCONTRADA!`);
+                    return product;
+                }
+            }
+
+            console.log(`   ⚠️  Se encontraron productos pero NO coincidencia exacta`);
+            console.log(`   💡 Sugerencia: Tal vez el producto tiene otro nombre o está archivado`);
+            
+            // Retornar el primero encontrado aunque no sea coincidencia exacta
+            // (para debugging, el usuario puede ver qué sí existe)
+            return data.products.edges[0].node;
+
+        } catch (error) {
+            console.error(`   ❌ Error buscando producto: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * BÚSQUEDA DE MÚLTIPLES PRODUCTOS
+     * 
+     * Busca varios productos por títulos en un solo call.
+     * Retorna array con resultados (algunos pueden ser null si no se encuentran)
+     * 
+     * Útil para:
+     * - Validar que múltiples productos existan
+     * - Debug de varios productos al mismo tiempo
+     * - Comparativas
+     * 
+     * @param {Array<string>} searchTitles - Array de títulos a buscar
+     * @returns {Promise<Array<Object>>} - Array de productos encontrados
+     * @throws {Error} - Si hay error crítico
+     */
+    async searchProductsByTitles(searchTitles) {
+        if (!Array.isArray(searchTitles)) {
+            throw new Error('searchTitles debe ser un array');
+        }
+
+        console.log(`\n🔍 Buscando ${searchTitles.length} producto(s)...\n`);
+
+        const results = [];
+
+        for (const title of searchTitles) {
+            try {
+                const product = await this.searchProductByTitle(title);
+                results.push({
+                    searchedTitle: title,
+                    found: product !== null,
+                    product: product
+                });
+            } catch (error) {
+                console.error(`   ❌ Error con "${title}": ${error.message}`);
+                results.push({
+                    searchedTitle: title,
+                    found: false,
+                    product: null,
+                    error: error.message
+                });
+            }
+
+            // Pequeño delay entre búsquedas para ser respetuoso con rate limit
+            if (searchTitles.indexOf(title) < searchTitles.length - 1) {
+                await this.sleep(100);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Actualiza el precio de una variante de producto en Shopify
+     * @param {string} variantId - ID de la variante (formato: gid://shopify/ProductVariant/123)
+     * @param {number} newPrice - Nuevo precio en CLP
+     * @returns {Promise<Object>} - Variante actualizada
+     */
+    async updateProductVariantPrice(variantId, newPrice) {
+        console.log(`📝 Actualizando precio en Shopify: ${variantId} → $${newPrice}`);
+
+        const mutation = `
+            mutation productVariantUpdate($input: ProductVariantInput!) {
+                productVariantUpdate(input: $input) {
+                    productVariant {
+                        id
+                        price
+                        title
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            input: {
+                id: variantId,
+                price: newPrice.toString()
+            }
+        };
+
+        try {
+            const data = await this.graphqlQuery(mutation, variables);
+
+            if (data.productVariantUpdate.userErrors.length > 0) {
+                const errors = data.productVariantUpdate.userErrors.map(e => e.message).join(', ');
+                throw new Error(`Shopify errors: ${errors}`);
+            }
+
+            console.log('✅ Precio actualizado en Shopify');
+            return data.productVariantUpdate.productVariant;
+
+        } catch (error) {
+            console.error(`❌ Error actualizando precio en Shopify: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Busca una variante a partir de inventory_item_id (webhook inventory_levels/update)
+     * @param {string} inventoryItemId - ID numérico de Inventory Item
+     * @returns {Promise<Object|null>} - Datos mínimos de variante/producto o null
+     */
+    async getVariantByInventoryItemId(inventoryItemId) {
+        const gid = `gid://shopify/InventoryItem/${inventoryItemId}`;
+        const query = `
+            query getInventoryItem($id: ID!) {
+                inventoryItem(id: $id) {
                     id
-                    legacyResourceId
-                    price
-                }
-                userErrors {
-                    field
-                    message
+                    sku
+                    variant {
+                        id
+                        title
+                        inventoryQuantity
+                        product {
+                            id
+                            title
+                            status
+                            productType
+                            vendor
+                        }
+                    }
                 }
             }
+        `;
+
+        try {
+            const data = await this.graphqlQuery(query, { id: gid });
+            const item = data.inventoryItem;
+            if (!item || !item.variant) {
+                return null;
+            }
+
+            return {
+                id: item.variant.id,
+                title: item.variant.title,
+                inventoryQuantity: item.variant.inventoryQuantity,
+                sku: item.sku,
+                product: item.variant.product
+            };
+        } catch (error) {
+            console.error(`❌ Error consultando inventory item ${inventoryItemId}: ${error.message}`);
+            return null;
         }
-    `;
-
-    const variables = {
-        input: {
-            id: gid,
-            price: newPrice.toString()
-        }
-    };
-
-    console.log(`💸 Actualizando precio de variante ${variantId} a ${newPrice}`);
-
-    const data = await executeGraphQL(mutation, variables);
-
-    if (data.productVariantUpdate.userErrors.length > 0) {
-        throw new Error(
-            'Errores al actualizar precio: ' +
-            JSON.stringify(data.productVariantUpdate.userErrors)
-        );
     }
 
-    console.log(`🆗 Precio actualizado correctamente`);
+    /**
+     * Utilidad: Sleep/delay
+     * @param {number} ms - Milisegundo a esperar
+     */
 
-    return data.productVariantUpdate.productVariant;
-}
-
-// ===========================================================
-// CONTAR PRODUCTOS
-// ===========================================================
-
-/*
-    Obtiene el conteo de productos (más rápido que obtener todos)
-
-    @returns {Promise<number>} Cantidad de productos
-*/
-async function getProductCount() {
-    ensureConfigured();
-
-    const query = `
-        query {
-            productsCount {
-                count
-            }
-        }
-    `;
-
-    const data = await executeGraphQL(query);
-
-    return data.productsCount.count;
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 }
 
 
-// ===========================================================
-// FUNCIONES AUXILIARES
-// ===========================================================
-/*
-    Formatea un producto de GraphQL a formato consistente
-*/
-function formatProduct(graphqlProduct) {
-    // Extraer primera variante (mayoría de sellados tienen solo 1)
-    const firstVariant = graphqlProduct.variants.edges[0]?.node || {};
-
-    return {
-        id: graphqlProduct.legacyResourceId, // ID numérico (compatible con código anterior)
-        gid: graphqlProduct.id, // ID de GraphQL
-        title: graphqlProduct.title,
-        handle: graphqlProduct.handle,
-        vendor: graphqlProduct.vendor,
-        product_type: graphqlProduct.productType,
-        tags: graphqlProduct.tags.join(', '), // GraphQL devuelve array, convertir a string
-        status: graphqlProduct.status.toLowerCase(),
-        created_at: graphqlProduct.createdAt,
-        updated_at: graphqlProduct.updatedAt,
-        image: graphqlProduct.featuredImage ? { src: graphqlProduct.featuredImage.url } : null,
-
-        variants: [
-            {
-                id: firstVariant.legacyResourceId,
-                gid: firstVariant.id,
-                sku: firstVariant.sku,
-                price: firstVariant.price,
-                compare_at_price: firstVariant.compareAtPrice,
-                inventory_quantity: firstVariant.inventoryQuantity,
-                barcode: firstVariant.barcode
-            }
-        ]
-    };
-}
-
-
-
-
-// ===========================================================
-// EXPORTAR
-// ===========================================================
-
-module.exports = {
-    executeGraphQL,
-    getProducts,
-    getAllProducts,
-    getProductById,
-    updateProductPrice,
-    getProductCount
-};
+module.exports = new ShopifyService();

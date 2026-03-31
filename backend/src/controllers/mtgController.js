@@ -7,7 +7,7 @@
 const scryfallService = require('../services/scryfallService');
 const MtgCard = require('../models/MtgCard');
 const logger = require('../utils/logger');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const { sequelize } = require('../config/database');
 
 // ===========================================================
@@ -112,6 +112,7 @@ async function getCards(req, res) {
     try {
         const {
             set_code,
+            oracle_id,
             lang = 'en',
             name,
             rarity,
@@ -122,6 +123,17 @@ async function getCards(req, res) {
         const whereClause = { lang };
         
         if (set_code) whereClause.set_code = set_code;
+        
+        // Soportar múltiples oracle_ids separados por coma
+        if (oracle_id) {
+            if (oracle_id.includes(',')) {
+                const ids = oracle_id.split(',').map(id => id.trim()).filter(id => id);
+                whereClause.oracle_id = { [Op.in]: ids };
+            } else {
+                whereClause.oracle_id = oracle_id;
+            }
+        }
+        
         if (rarity) whereClause.rarity = rarity;
         if (name) {
             whereClause.name = {
@@ -139,7 +151,10 @@ async function getCards(req, res) {
             attributes: [
                 'id',
                 'scryfall_id',
+                'oracle_id',
                 'name',
+                'printed_name',
+                'lang',
                 'mana_cost',
                 'type_line',
                 'oracle_text',
@@ -232,6 +247,171 @@ async function getCard(req, res) {
     }
 }
 
+/**
+ * GET /api/mtg/search
+ * Buscar cartas por nombre (inglés o español)
+ */
+async function searchCards(req, res) {
+    try {
+        const { name, lang, limit = 100 } = req.query;
+
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Parámetro "name" es requerido'
+            });
+        }
+
+        // Buscar en ambos campos: name (inglés) y printed_name (localizado)
+        const whereClause = {
+            [Op.or]: [
+                { name: { [Op.iLike]: `%${name}%` } },
+                { printed_name: { [Op.iLike]: `%${name}%` } }
+            ]
+        };
+
+        // Filtrar por idioma si se especifica
+        if (lang) {
+            whereClause.lang = lang;
+        }
+
+        const cards = await MtgCard.findAll({
+            where: whereClause,
+            limit: parseInt(limit),
+            order: [
+                ['name', 'ASC'],
+                ['released_at', 'DESC'],
+                ['set_code', 'ASC']
+            ]
+        });
+
+        res.json({
+            success: true,
+            total: cards.length,
+            data: cards
+        });
+
+    } catch (error) {
+        logger.error('Error en búsqueda de cartas:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error en búsqueda',
+            error: error.message
+        });
+    }
+}
+
+/**
+ * GET /api/mtg/sets/:setCode/cards
+ * Obtener cartas de un set específico
+ */
+async function getSetCards(req, res) {
+    try {
+        const { setCode } = req.params;
+        const { lang } = req.query;
+
+        const whereClause = {
+            set_code: setCode.toLowerCase()
+        };
+
+        if (lang) {
+            whereClause.lang = lang;
+        }
+
+        const cards = await MtgCard.findAll({
+            where: whereClause,
+            order: [['collector_number', 'ASC']]
+        });
+
+        if (cards.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Set no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                set_code: setCode,
+                set_name: cards[0].set_name,
+                total: cards.length,
+                cards: cards
+            }
+        });
+
+    } catch (error) {
+        logger.error('Error obteniendo cartas del set:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error obteniendo cartas del set',
+            error: error.message
+        });
+    }
+}
+
+/**
+ * GET /api/mtg/autocomplete
+ * Autocompletado de nombres de cartas
+ */
+async function autocompleteCards(req, res) {
+    try {
+        const { q, limit = 10, lang } = req.query;
+
+        if (!q || q.length < 2) {
+            return res.json({
+                success: true,
+                data: []
+            });
+        }
+
+        // Buscar en name (inglés) y printed_name (localizado)
+        const whereCondition = {
+            [Op.or]: [
+                { name: { [Op.iLike]: `${q}%` } },
+                { printed_name: { [Op.iLike]: `${q}%` } }
+            ]
+        };
+
+        // Si se especifica idioma, filtrar solo por ese idioma
+        if (lang && (lang === 'en' || lang === 'es')) {
+            whereCondition.lang = lang;
+        }
+
+        const cards = await MtgCard.findAll({
+            attributes: ['name', 'printed_name', 'lang'],
+            where: whereCondition,
+            limit: parseInt(limit) * 3,
+            order: [['name', 'ASC']]
+        });
+
+        // Crear lista con nombres únicos, priorizando el nombre correcto según idioma
+        const uniqueNames = [];
+        const seenNames = new Set();
+        
+        cards.forEach(card => {
+            const displayName = (card.lang === 'es' && card.printed_name) ? card.printed_name : card.name;
+            if (!seenNames.has(displayName)) {
+                seenNames.add(displayName);
+                uniqueNames.push(displayName);
+            }
+        });
+
+        res.json({
+            success: true,
+            data: uniqueNames.slice(0, parseInt(limit))
+        });
+
+    } catch (error) {
+        logger.error('Error en autocompletado:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Error en autocompletado',
+            error: error.message
+        });
+    }
+}
+
 // ===========================================================
 // EXPORTAR
 // ===========================================================
@@ -241,5 +421,8 @@ module.exports = {
     getStats,
     getSets,
     getCards,
-    getCard
+    getCard,
+    searchCards,
+    getSetCards,
+    autocompleteCards
 };

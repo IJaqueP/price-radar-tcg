@@ -21,8 +21,8 @@ export function getNavbarHTML() {
             <div class="navbar-container">
                 <!-- Logo y Nombre -->
                 <div class="navbar-brand">
-                    <i class="bi bi-lightning-charge-fill navbar-icon"></i>
-                    <span class="navbar-title">Price Radar TCG</span>
+                    <img src="assets/logo-tcg-mio.png" alt="Logo" class="navbar-logo">
+                    <span class="navbar-title">Nexus Cards</span>
                     <span class="navbar-subtitle">Oasis Games</span>
                 </div>
 
@@ -31,20 +31,200 @@ export function getNavbarHTML() {
                 <li>
                     <a href="#" class="navbar-link active" data-page="dashboard">
                         <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
+                        <span>Radar Price</span>
                     </a>
                 </li>
-                <li>
-                    <a href="#" class="navbar-link" data-page="ventas">
-                        <i class="bi bi-graph-up"></i>
-                        <span>Ventas</span>
+                
+                <!-- Magic Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-star"></i>
+                        <span>Magic</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
                     </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="magic-sealed">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Sellado</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-page="mtg-cartas">
+                                <i class="bi bi-card-list"></i>
+                                <span>Cartas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-page="mtg-ediciones">
+                                <i class="bi bi-collection-fill"></i>
+                                <span>Ediciones</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-page="mtg-spoiler">
+                                <i class="bi bi-grid-3x3"></i>
+                                <span>Spoiler</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-                <li>
-                    <a href="#" class="navbar-link" data-page="configuracion">
-                        <i class="bi bi-gear"></i>
-                        <span>Configuración</span>
+                
+                <!-- Pokemon Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-circle"></i>
+                        <span>Pokémon</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
                     </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="pokemon-sealed">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Sellado</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-card-list"></i>
+                                <span>Singles</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-collection-fill"></i>
+                                <span>Ediciones</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-grid-3x3"></i>
+                                <span>Spoiler</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- One Piece Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-flag"></i>
+                        <span>One Piece</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
+                    </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="onepiece-sealed">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Sellado</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-card-list"></i>
+                                <span>Singles</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-collection-fill"></i>
+                                <span>Ediciones</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-grid-3x3"></i>
+                                <span>Spoiler</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Gundam Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-robot"></i>
+                        <span>Gundam</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
+                    </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="gundam-sealed">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Sellado</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-card-list"></i>
+                                <span>Singles</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-collection-fill"></i>
+                                <span>Ediciones</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-grid-3x3"></i>
+                                <span>Spoiler</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Riftbound Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-book"></i>
+                        <span>Riftbound</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
+                    </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="riftbound-sealed">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Sellado</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-card-list"></i>
+                                <span>Singles</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-collection-fill"></i>
+                                <span>Ediciones</span>
+                            </a>
+                        </li>
+                        <li class="disabled">
+                            <a href="#" class="text-muted">
+                                <i class="bi bi-grid-3x3"></i>
+                                <span>Spoiler</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Accesorios Dropdown -->
+                <li class="navbar-dropdown">
+                    <a href="#" class="navbar-link">
+                        <i class="bi bi-box"></i>
+                        <span>Accesorios</span>
+                        <i class="bi bi-chevron-down dropdown-icon"></i>
+                    </a>
+                    <ul class="navbar-submenu">
+                        <li>
+                            <a href="#" data-page="accessories-products">
+                                <i class="bi bi-box-seam"></i>
+                                <span>Productos</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
 
@@ -73,7 +253,7 @@ export function getNavbarHTML() {
 export function initNavbar() {
     console.log('🆗 Inicializando navbar');
 
-    // Configurar toggle para móviles (funcionalidad futura)
+    // Configurar toggle para móviles
     const toggleBtn = document.getElementById('navbar-toggle');
     const navbarMenu = document.querySelector('.navbar-menu');
 
@@ -84,8 +264,11 @@ export function initNavbar() {
         });
     }
 
+    // Inicializar todos los dropdowns
+    initAllDropdowns();
+
     // Cerrar menú móvil al hacer click en un link
-    const navLinks = document.querySelectorAll('.navbar-link');
+    const navLinks = document.querySelectorAll('.navbar-link[data-page], .navbar-submenu a[data-page]');
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             if (navbarMenu) {
@@ -97,11 +280,82 @@ export function initNavbar() {
     console.log('🆗 Navbar inicializado');
 }
 
+/**
+ * Inicializa TODOS los dropdowns del navbar
+ */
+function initAllDropdowns() {
+    const dropdowns = document.querySelectorAll('.navbar-dropdown');
+    
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.navbar-link');
+        const submenu = dropdown.querySelector('.navbar-submenu');
+        
+        if (!toggle || !submenu) return;
+        
+        // Hover para desktop
+        dropdown.addEventListener('mouseenter', () => {
+            submenu.classList.add('show');
+        });
+        
+        dropdown.addEventListener('mouseleave', () => {
+            submenu.classList.remove('show');
+        });
+        
+        // Click para móvil - Solo en el toggle principal, NO en los items del submenu
+        toggle.addEventListener('click', (e) => {
+            // Si el click es en un item del submenu, no hacer nada
+            if (e.target.closest('.navbar-submenu')) {
+                return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Cerrar otros dropdowns
+            dropdowns.forEach(other => {
+                if (other !== dropdown) {
+                    other.querySelector('.navbar-submenu')?.classList.remove('show');
+                }
+            });
+            
+            submenu.classList.toggle('show');
+        });
+        
+        // Permitir que los enlaces del submenu funcionen normalmente
+        const submenuLinks = submenu.querySelectorAll('a[data-page]');
+        submenuLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                // Cerrar el submenu pero permitir que la navegación continúe
+                submenu.classList.remove('show');
+                // NO prevenir el evento, dejar que main.js lo maneje
+            });
+        });
+    });
+    
+    // Cerrar al hacer click fuera DE FORMA GLOBAL
+    document.addEventListener('click', (e) => {
+        // Si el click fue en un enlace de datos (para navegación), cerrar dropdown pero permitir navegación
+        if (e.target.closest('[data-page]')) {
+            dropdowns.forEach(dropdown => {
+                dropdown.querySelector('.navbar-submenu')?.classList.remove('show');
+            });
+            return;
+        }
+        
+        // Si el click fue fuera del navbar, cerrar todos los dropdowns
+        if (!e.target.closest('.navbar-dropdown')) {
+            dropdowns.forEach(dropdown => {
+                dropdown.querySelector('.navbar-submenu')?.classList.remove('show');
+            });
+        }
+    });
+}
 
-/*
-    Actualiza el estado de sincronización en el navbar
-    @param {string} status - Estado: 'syncing', 'synced', 'error'
-    @param {string} message - Mensaje opcional
+
+/**
+    * Actualiza el estado de sincronización en el navbar
+    * @param {string} status - Estado: 'syncing', 'synced', 'error'
+    * @param {string} message - Mensaje opcional
 */
 export function updateSyncStatus(status, message = '') {
     const syncElement = document.getElementById('sync-status');
@@ -133,7 +387,6 @@ export function updateSyncStatus(status, message = '') {
             break;
     }
 }
-
 
 /*
     Muestra notificación en el navbar

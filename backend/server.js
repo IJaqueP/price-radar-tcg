@@ -18,6 +18,33 @@ require('dotenv').config();
 // Importar la aplicación Express desde src/app.js
 const app = require('./src/app');
 
+// Importar la configuración de base de datos para crear tablas
+const { sequelize } = require('./src/config/database');
+
+// ===========================================================
+// CREAR TABLAS EN LA BASE DE DATOS
+// ===========================================================
+
+async function initializeDatabase() {
+    try {
+        console.log('🔄 Verificando conexión a la base de datos...');
+        
+        // Probar conexión
+        await sequelize.authenticate();
+        console.log('✅ Conexión a PostgreSQL establecida correctamente');
+        
+        // Crear tablas si no existen (sin alter para evitar conflictos)
+        console.log('🔄 Sincronizando modelos con la base de datos...');
+        await sequelize.sync({ alter: false });
+        console.log('✅ Tablas verificadas correctamente');
+        
+    } catch (error) {
+        console.error('❌ Error al conectar con la base de datos:', error.message);
+        console.error('💡 Verifica que PostgreSQL esté corriendo y las credenciales en .env sean correctas');
+        process.exit(1);
+    }
+}
+
 // ===========================================================
 // CONFIGURACIÓN DEL SERVIDOR
 // ===========================================================
@@ -38,23 +65,80 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
     1. Puerto (3000)
     2. Callback que se ejecuta cuando el servidor arranca correctamente
 */
-app.listen(PORT, () => {
-    console.log('=========================================================');
-    console.log('🚀🚀 PRICE RADAR TCG - BACKEND INICIADO 🚀🚀');
-    console.log('DESARROLLO PARA OASIS GAMES');
-    console.log('=========================================================');
-    console.log(`🛜 Servidor corriendo en: http://localhost:${PORT}`);
-    console.log(`🌎 Entorno: ${NODE_ENV}`);
-    console.log(`🕰️ Fecha de inicio: ${new Date().toLocaleString('es-CL')}`);
-    console.log('=========================================================');
 
-    // Solo en desarrollo, mostrar esta información adicional
-    if (NODE_ENV === 'development') {
-        console.log('\n🗒️ Endpoints disponibles:');
-        console.log(`   GET http://localhost:${PORT}/api/health`);
-        console.log(`   GET http://localhost:${PORT}/api/products`);
-        console.log('\n💡 Tip: Usa Ctrl + C para detener el servidor\n');
-    }
+// Inicializar la base de datos primero, luego iniciar el servidor
+let server;
+
+initializeDatabase().then(() => {
+    server = app.listen(PORT, '0.0.0.0', () => {
+        console.log('=========================================================');
+        console.log('🚀🚀 PRICE RADAR TCG - BACKEND INICIADO 🚀🚀');
+        console.log('DESARROLLO PARA OASIS GAMES');
+        console.log('=========================================================');
+        console.log(`🛜 Servidor corriendo en: http://localhost:${PORT}`);
+        console.log(`🛜 También accesible en: http://127.0.0.1:${PORT}`);
+        console.log(`🌎 Entorno: ${NODE_ENV}`);
+        console.log(`🕰️ Fecha de inicio: ${new Date().toLocaleString('es-CL')}`);
+        console.log('=========================================================');
+
+        // Solo en desarrollo, mostrar esta información adicional
+        if (NODE_ENV === 'development') {
+            console.log('\n🗒️ Endpoints disponibles:');
+            console.log('\n   🔎 Health & diagnóstico');
+            console.log(`   GET    http://localhost:${PORT}/api/health                -> Estado básico del backend`);
+            console.log(`   GET    http://localhost:${PORT}/api/health/detailed       -> Estado detallado (DB, memoria, config)`);
+            console.log(`   GET    http://localhost:${PORT}/api/test                  -> Test rápido de conectividad`);
+
+            console.log('\n   📦 Productos & comparación');
+            console.log(`   GET    http://localhost:${PORT}/api/products/alerts       -> Productos con alertas de precio`);
+            console.log(`   GET    http://localhost:${PORT}/api/products/list         -> Listado paginado de productos`);
+            console.log(`   GET    http://localhost:${PORT}/api/products/:id          -> Detalle de producto`);
+            console.log(`   PATCH  http://localhost:${PORT}/api/products/:id/price    -> Actualizar precio en Shopify`);
+            console.log(`   POST   http://localhost:${PORT}/api/products/:id/compare  -> Forzar comparación de precio`);
+            console.log(`   GET    http://localhost:${PORT}/api/products/sealed/:game -> Sellado por juego (stock > 0)`);
+
+            console.log('\n   🧩 Reconciliación de sellado (JustTCG)');
+            console.log(`   POST   http://localhost:${PORT}/api/sealed/reconcile      -> Ejecutar reconciliación`);
+            console.log(`   GET    http://localhost:${PORT}/api/sealed/stats          -> Estadísticas de reconciliación`);
+            console.log(`   GET    http://localhost:${PORT}/api/sealed/mappings       -> Listar mappings`);
+            console.log(`   GET    http://localhost:${PORT}/api/sealed/mappings/:id   -> Ver mapping específico`);
+            console.log(`   PUT    http://localhost:${PORT}/api/sealed/mappings/:id   -> Actualizar mapping`);
+            console.log(`   DELETE http://localhost:${PORT}/api/sealed/mappings/:id   -> Eliminar mapping`);
+
+            console.log('\n   🃏 MTG (Scryfall)');
+            console.log(`   POST   http://localhost:${PORT}/api/mtg/sync              -> Sincronizar cartas MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/stats             -> Estadísticas MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/search            -> Buscar cartas MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/autocomplete      -> Autocompletado MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/sets              -> Listar ediciones MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/sets/:setCode/cards -> Cartas por edición`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/cards             -> Listado de cartas MTG`);
+            console.log(`   GET    http://localhost:${PORT}/api/mtg/cards/:id         -> Detalle carta MTG`);
+
+            console.log('\n   🛍️ Shopify');
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/sync/initial  -> Sync inicial (sin guardar)`);
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/sync/initial-db -> Sync inicial + guardar en BD`);
+            console.log(`   GET    http://localhost:${PORT}/api/shopify/stats         -> Estadísticas rápidas Shopify`);
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/webhooks/products/create -> Webhook creación producto`);
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/webhooks/products/update -> Webhook actualización producto`);
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/webhooks/products/delete -> Webhook eliminación producto`);
+            console.log(`   POST   http://localhost:${PORT}/api/shopify/webhooks/inventory_levels/update -> Webhook stock en tiempo real`);
+
+            console.log('\n   🔄 Sync interno');
+            console.log(`   GET    http://localhost:${PORT}/api/sync/shopify-products -> Sync de productos Shopify`);
+            console.log(`   GET    http://localhost:${PORT}/api/sync/stats            -> Estadísticas de sync`);
+
+            console.log('\n💡 Tip: Usa Ctrl + C para detener el servidor\n');
+        }
+
+        // Iniciar cron job de renovación de Shopify Token
+        const { startTokenRefreshCron } = require('./src/jobs/shopifyTokenRefreshCron');
+        startTokenRefreshCron();
+
+        // Iniciar cron job de reconciliación+refresh para dashboard de sellados
+        const { startSealedSyncCron } = require('./src/jobs/sealedSyncCron');
+        startSealedSyncCron();
+    });
 });
 
 // ===========================================================
@@ -89,10 +173,14 @@ process.on('SIGTERM', () => {
 
     // Cerrar el servidor de forma ordenada
     // Esto permite que las conexiones actuales terminen antes de cerrar
-    app.close(() => {
-        console.log('🆗 Servidor cerrado correctamente');
+    if (server) {
+        server.close(() => {
+            console.log('\uD83C\uDD97 Servidor cerrado correctamente');
+            process.exit(0);
+        });
+    } else {
         process.exit(0);
-    });
+    }
 });
 
 // Capturar CTRL + C

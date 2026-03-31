@@ -11,10 +11,12 @@ const mtgController = require('../controllers/mtgController');
 router.post('/sync', mtgController.syncCards);
 router.get('/stats', mtgController.getStats);
 
-// Consultas
+// Búsqueda y consultas
+router.get('/search', mtgController.searchCards);
+router.get('/autocomplete', mtgController.autocompleteCards);
 router.get('/sets', mtgController.getSets);
+router.get('/sets/:setCode/cards', mtgController.getSetCards);
 router.get('/cards', mtgController.getCards);
 router.get('/cards/:id', mtgController.getCard);
-
 
 module.exports = router;

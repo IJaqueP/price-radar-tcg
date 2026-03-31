@@ -63,6 +63,13 @@ temp/
 coverage/
 .nyc_output/
 
+# Tests de desarrollo (no subir)
+backend/tests/
+backend/src/tests/
+
 # Archivos de debug
 .DS_Store
 .env.test
+
+# Archivo de SKUs
+.justtcg_seen_skus.txt

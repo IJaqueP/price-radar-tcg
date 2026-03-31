@@ -80,6 +80,7 @@ async function testConnection() {
         return true;
     } catch (error) {
         console.log('❌ Error al conectar a PostgreSQL:', error.message);
+        return false;
     }
 }
 

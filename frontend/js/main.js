@@ -14,7 +14,8 @@ const AppState = {
 
 // Initialize Application
 async function initApp() {
-    console.log(`🚀 Initializing ${CONFIG.APP.NAME} v${CONFIG.APP.VERSION}`);
+    console.log(`%c🚀 Initializing ${CONFIG.APP.NAME} v${CONFIG.APP.VERSION}`, 'color: green; font-size: 16px; font-weight: bold');
+    console.log(`%cBackend API: ${CONFIG.API_BASE_URL}`, 'color: blue');
     
     try {
         showLoader();
@@ -29,10 +30,10 @@ async function initApp() {
         setupNavigation();
         
         hideLoader();
-        console.log('✅ Application initialized successfully');
+        console.log('%c✅ Application initialized successfully', 'color: green; font-weight: bold');
         
     } catch (error) {
-        console.error('❌ Error initializing application:', error);
+        console.error('%c❌ Error initializing application:', 'color: red; font-weight: bold', error);
         hideLoader();
         showError('Error al inicializar la aplicación. Por favor, recarga la página.');
     }
@@ -57,17 +58,24 @@ async function loadNavbar() {
 async function navigateTo(pageName) {
     if (AppState.currentPage === pageName) return;
     
+    console.log(`%c[NAV] Navegando a: ${pageName}`, 'color: purple; font-weight: bold');
+    
     try {
         showLoader();
         
         const contentElement = document.getElementById('app-content');
         
         // Dynamic import of page module
+        console.log(`[NAV] Importando módulo: ./pages/${pageName}.js`);
         const pageModule = await import(`./pages/${pageName}.js`);
         
         // Load page content
         if (typeof pageModule.render === 'function') {
+            console.log(`[NAV] Renderizando página...`);
             await pageModule.render(contentElement);
+            console.log(`[NAV] Página renderizada exitosamente`);
+        } else {
+            throw new Error(`La página ${pageName} no tiene función render()`);
         }
         
         // Update app state
@@ -79,9 +87,9 @@ async function navigateTo(pageName) {
         hideLoader();
         
     } catch (error) {
-        console.error(`Error loading page ${pageName}:`, error);
+        console.error(`%c[NAV] ERROR al cargar ${pageName}:`, 'color: red; font-weight: bold', error);
         hideLoader();
-        showError(`Error al cargar la página: ${pageName}`);
+        showError(`Error al cargar la página: ${pageName}<br><small>${error.message}</small>`);
     }
 }
 

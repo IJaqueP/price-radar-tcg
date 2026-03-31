@@ -21,13 +21,12 @@ const MtgCard = sequelize.define('MtgCard', {
     scryfall_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        unique: true,
         comment: 'ID único de esta impresión específica en Scryfall'
     },
 
     oracle_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         comment: 'ID que agrupa todas las impresiones de la misma carta'
     },
 
@@ -35,7 +34,13 @@ const MtgCard = sequelize.define('MtgCard', {
     name: {
         type: DataTypes.STRING(200),
         allowNull: false,
-        comment: 'Nombre de la carta'
+        comment: 'Nombre de la carta (siempre en inglés por Oracle)'
+    },
+
+    printed_name: {
+        type: DataTypes.STRING(200),
+        allowNull: true,
+        comment: 'Nombre impreso en la carta (localizado según idioma)'
     },
 
     lang: {
@@ -167,10 +172,12 @@ const MtgCard = sequelize.define('MtgCard', {
         { unique: true, fields: ['scryfall_id'] },
         { fields: ['oracle_id'] },
         { fields: ['name'] },
+        { fields: ['printed_name'] },
         { fields: ['set_code'] },
         { fields: ['lang'] },
         { fields: ['set_code', 'lang'] },
         { fields: ['name', 'lang'] },
+        { fields: ['printed_name', 'lang'] },
         { fields: ['rarity'] },
         { fields: ['released_at'] }
     ]

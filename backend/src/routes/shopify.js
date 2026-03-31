@@ -57,38 +57,6 @@ router.post('/sync/initial-db', shopifyController.initialSyncWithDatabase);
 
 
 // ===========================================================
-// OBTENER MUESTRA
-// ===========================================================
-
-/*
-    GET /api/shopify/sample?limit=50
-
-    Obtiene una muestra de productos para testing (sin sync completo)
-*/
-router.get('/stats', async (req, res) => {
-    try {
-        const result = await shopifyController.getQuickStats();
-
-        res.json(
-            {
-                success: true,
-                data: result
-            }
-        );
-
-
-    } catch (error) {
-        res.status(500).json(
-            {
-                success: false,
-                error: error.message
-            }
-        );
-    }
-});
-
-
-// ===========================================================
 // ESTADÍSTICAS RÁPIDAS
 // ===========================================================
 
@@ -108,6 +76,7 @@ router.get('/stats', async (req, res) => {
             }
         );
 
+
     } catch (error) {
         res.status(500).json(
             {
@@ -117,6 +86,7 @@ router.get('/stats', async (req, res) => {
         );
     }
 });
+
 
 // ===========================================================
 // EXPORTAR
