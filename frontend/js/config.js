@@ -3,8 +3,10 @@
 =========================================================== */
 
 const CONFIG = {
-    // Backend API Base URL
-    API_BASE_URL: 'http://127.0.0.1:3000/api',
+    // Backend API Base URL (auto-detect: en VPS usa la IP/dominio actual, en local usa localhost)
+    API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://127.0.0.1:3000/api'
+        : `${window.location.protocol}//${window.location.hostname}:3000/api`,
 
     // API Endpoints
     ENDPOINTS: {

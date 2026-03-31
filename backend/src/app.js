@@ -17,6 +17,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const syncRoutes = require('./routes/syncRoutes');
 const reconcileRoutes = require('./routes/reconcileRoutes');
@@ -137,6 +138,20 @@ app.use('/api/reconcile', reconcileRoutes);
 
 // Rutas de reconciliación de productos sellados
 app.use('/api/sealed', sealedRoutes);
+
+// ===========================================================
+// SERVIR FRONTEND (archivos estáticos)
+// ===========================================================
+const frontendPath = path.join(__dirname, '../../frontend');
+app.use(express.static(frontendPath));
+
+// Cualquier ruta que no sea /api/* sirve index.html (SPA fallback)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // ===========================================================
 // MANEJO DE ERRORES GLOBALES
