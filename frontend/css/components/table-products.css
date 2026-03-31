@@ -112,11 +112,47 @@
 
 /* ===== CONTENIDO DE CELDAS ===== */
 
+/* Producto con imagen */
+.product-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #2d2d2d;
+}
+
+.product-thumb-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: #2d2d2d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #666;
+    font-size: 20px;
+}
+
 /* Información del Producto */
 .product-info {
     display: flex;
     flex-direction: column;
     gap: 5px;
+}
+
+/* Stock display */
+.stock-display {
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
 }
 
 .product-name {

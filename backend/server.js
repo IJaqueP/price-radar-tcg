@@ -138,6 +138,20 @@ initializeDatabase().then(() => {
         // Iniciar cron job de reconciliación+refresh para dashboard de sellados
         const { startSealedSyncCron } = require('./src/jobs/sealedSyncCron');
         startSealedSyncCron();
+
+        // Registrar webhooks de Shopify para sync en tiempo real
+        const { registerAllWebhooks } = require('./src/services/webhookRegistrationService');
+        const backendUrl = process.env.BACKEND_URL;
+        registerAllWebhooks(backendUrl).then(result => {
+            if (result.skipped) {
+                console.log('⚠️  Webhooks no registrados (falta BACKEND_URL en .env)');
+                console.log('   Agrega BACKEND_URL=https://tu-dominio.com para sync en tiempo real');
+            } else if (result.error) {
+                console.log(`⚠️  Error registrando webhooks: ${result.error}`);
+            } else {
+                console.log(`✅ Webhooks Shopify: ${result.registered}/${result.total} registrados (sync en tiempo real activo)`);
+            }
+        });
     });
 });
 

@@ -22,6 +22,7 @@ import { showLoader, hideLoader } from '../utils/loader.js';
 let currentProducts = [];
 let currentFilter = 'all';
 let currentSearch = '';
+let currentThreshold = CONFIG.PRICE_ALERT.THRESHOLD_PERCENTAGE;
 
 /**
  * Renderiza la página del dashboard
@@ -51,10 +52,19 @@ function getDashboardHTML() {
                 <div class="header-content">
                     <h1 class="page-title">
                         <i class="bi bi-speedometer2"></i>
-                        Dashboard de Alertas
+                        Radar Price
                     </h1>
                     <p class="page-subtitle">
-                        Productos con diferencias de precio superiores al ${CONFIG.PRICE_ALERT.THRESHOLD_PERCENTAGE}%
+                        Productos con diferencias de precio superiores al 
+                        <input 
+                            type="number" 
+                            id="threshold-input" 
+                            class="threshold-input" 
+                            value="${currentThreshold}" 
+                            min="0" 
+                            max="100" 
+                            step="0.5"
+                        />%
                     </p>
                 </div>
                 <button class="btn-primary-custom" id="btn-sync" type="button">
@@ -162,6 +172,9 @@ async function initDashboard() {
     
     // Event listeners
     setupEventListeners();
+
+    // Event delegation para acciones de tabla (edit/view)
+    setupTableActions();
 }
 
 /**
@@ -172,7 +185,8 @@ async function loadProducts() {
         showLoader();
 
         const response = await api.getProductAlerts({
-            limit: 200
+            limit: 200,
+            threshold: currentThreshold
         });
         
         currentProducts = response.products || [];
@@ -215,11 +229,17 @@ function renderProductsTable() {
     // Generar filas de la tabla
     tbody.innerHTML = filteredProducts.map(product => `
         <tr data-product-id="${product.id}">
-            <!-- Producto (sin imagen) -->
+            <!-- Producto con imagen -->
             <td class="col-product">
-                <div class="product-info">
-                    <span class="product-name">${product.title}</span>
-                    <span class="product-sku">SKU: ${product.sku || 'N/A'}</span>
+                <div class="product-info-row">
+                    ${product.image_url 
+                        ? `<img src="${product.image_url}" alt="" class="product-thumb" loading="lazy" />`
+                        : `<div class="product-thumb-placeholder"><i class="bi bi-box-seam"></i></div>`
+                    }
+                    <div class="product-info">
+                        <span class="product-name">${product.title}</span>
+                        <span class="product-sku">SKU: ${product.sku || 'N/A'}</span>
+                    </div>
                 </div>
             </td>
             
@@ -232,7 +252,9 @@ function renderProductsTable() {
             
             <!-- Stock -->
             <td class="col-stock">
-                ${getStockBadge(product.stock)}
+                <span class="stock-display" style="color: ${getStockColor(product.stock)}; font-weight: 600; font-size: 14px;">
+                    ${product.stock != null ? product.stock : 0}
+                </span>
             </td>
             
             <!-- Precio Shopify -->
@@ -255,15 +277,19 @@ function renderProductsTable() {
                 <div class="actions-group">
                     <button 
                         class="btn-action btn-edit" 
-                        onclick="window.dashboardActions.editPrice(${product.id})"
-                        title="Actualizar precio"
+                        data-action="edit-product"
+                        data-product-id="${product.id}"
+                        data-product-price="${product.shopify_price}"
+                        data-product-stock="${product.stock != null ? product.stock : 0}"
+                        title="Actualizar producto"
                     >
                         <i class="bi bi-pencil"></i>
                     </button>
                     <button 
                         class="btn-action btn-view" 
-                        onclick="window.dashboardActions.viewDetails(${product.id})"
-                        title="Ver detalles"
+                        data-action="view-shopify"
+                        data-shopify-url="${product.shopify_url || ''}"
+                        title="Ver en Shopify"
                     >
                         <i class="bi bi-eye"></i>
                     </button>
@@ -391,6 +417,21 @@ function setupEventListeners() {
             renderProductsTable();
         });
     }
+
+    // Threshold editable
+    const thresholdInput = document.getElementById('threshold-input');
+    if (thresholdInput) {
+        let thresholdTimeout;
+        thresholdInput.addEventListener('input', (e) => {
+            clearTimeout(thresholdTimeout);
+            const val = parseFloat(e.target.value);
+            if (!Number.isFinite(val) || val < 0) return;
+            thresholdTimeout = setTimeout(() => {
+                currentThreshold = val;
+                loadProducts();
+            }, 500);
+        });
+    }
 }
 
 /**
@@ -421,12 +462,9 @@ async function handleSync() {
     try {
         btn.classList.add('loading');
         btn.disabled = true;
+        btn.querySelector('span').textContent = 'Sincronizando...';
         
-        // TODO: Llamar endpoint de sincronización cuando esté listo
-        // await api.post('/shopify/sync/manual');
-        
-        // TEMPORAL: Simular sincronización
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await api.syncInitialWithDB();
         
         // Recargar productos
         await loadProducts();
@@ -439,6 +477,7 @@ async function handleSync() {
     } finally {
         btn.classList.remove('loading');
         btn.disabled = false;
+        btn.querySelector('span').textContent = 'Sincronizar Ahora';
     }
 }
 
@@ -510,6 +549,14 @@ function getStockBadge(stock) {
     } else {
         return `<span class="badge-stock stock-out"><i class="bi bi-x-circle"></i> Sin stock</span>`;
     }
+}
+
+function getStockColor(stock) {
+    const s = stock != null ? stock : 0;
+    if (s >= CONFIG.STOCK.HIGH) return '#22c55e';
+    if (s >= CONFIG.STOCK.MEDIUM) return '#f59e0b';
+    if (s >= CONFIG.STOCK.LOW) return '#ef4444';
+    return '#6b7280';
 }
 
 function getPriceDiffBadge(difference) {
@@ -602,17 +649,134 @@ function getMockProducts() {
 }
 
 // ============================================
-// ACCIONES EXPORTADAS (para botones inline)
+// ACCIONES VIA EVENT DELEGATION (evita problemas con comillas en títulos)
 // ============================================
 
-window.dashboardActions = {
-    editPrice: (productId) => {
-        console.log('Editar precio del producto:', productId);
-        alert(`Función de editar precio en desarrollo.\nProducto ID: ${productId}`);
-    },
-    
-    viewDetails: (productId) => {
-        console.log('Ver detalles del producto:', productId);
-        alert(`Función de ver detalles en desarrollo.\nProducto ID: ${productId}`);
-    }
-};
+// Usar event delegation en el tbody para manejar clicks en botones
+function setupTableActions() {
+    const tbody = document.getElementById('products-tbody');
+    if (!tbody) return;
+
+    tbody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+
+        if (action === 'edit-product') {
+            const productId = parseInt(btn.dataset.productId);
+            const currentPrice = parseFloat(btn.dataset.productPrice);
+            const currentStock = parseInt(btn.dataset.productStock) || 0;
+            const product = currentProducts.find(p => p.id === productId);
+            const productTitle = product ? product.title : 'Producto';
+
+            showEditProductModal(productId, productTitle, currentPrice, currentStock);
+        }
+
+        if (action === 'view-shopify') {
+            const shopifyUrl = btn.dataset.shopifyUrl;
+            if (shopifyUrl) {
+                window.open(shopifyUrl, '_blank');
+            } else {
+                alert('URL de Shopify no disponible para este producto.');
+            }
+        }
+    });
+}
+
+/**
+ * Muestra el modal para editar precio y stock de un producto
+ */
+function showEditProductModal(productId, title, currentPrice, currentStock) {
+    // Eliminar modal previo si existe
+    const existing = document.getElementById('edit-product-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'edit-product-modal';
+    modal.className = 'edit-modal-overlay';
+    modal.innerHTML = `
+        <div class="edit-modal-content">
+            <div class="edit-modal-header">
+                <h3><i class="bi bi-pencil-square"></i> Actualizar Producto</h3>
+                <button class="edit-modal-close" id="edit-modal-close">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <p class="edit-modal-title">${title}</p>
+                <div class="edit-modal-field">
+                    <label for="edit-price">Precio (CLP)</label>
+                    <input type="number" id="edit-price" value="${Math.round(currentPrice)}" min="0" step="10" />
+                </div>
+                <div class="edit-modal-field">
+                    <label for="edit-stock">Stock</label>
+                    <input type="number" id="edit-stock" value="${currentStock}" min="0" step="1" />
+                </div>
+            </div>
+            <div class="edit-modal-footer">
+                <button class="edit-modal-btn cancel" id="edit-modal-cancel">Cancelar</button>
+                <button class="edit-modal-btn save" id="edit-modal-save">Guardar cambios</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Focus en el campo de precio
+    setTimeout(() => document.getElementById('edit-price').focus(), 100);
+
+    // Cerrar modal
+    const closeModal = () => modal.remove();
+    document.getElementById('edit-modal-close').addEventListener('click', closeModal);
+    document.getElementById('edit-modal-cancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Guardar
+    document.getElementById('edit-modal-save').addEventListener('click', async () => {
+        const newPrice = parseFloat(document.getElementById('edit-price').value);
+        const newStock = parseInt(document.getElementById('edit-stock').value);
+
+        // Validaciones
+        if (!Number.isFinite(newPrice) || newPrice <= 0) {
+            alert('Precio inválido. Debe ser un número mayor a 0.');
+            return;
+        }
+        if (!Number.isFinite(newStock) || newStock < 0) {
+            alert('Stock inválido. Debe ser un entero >= 0.');
+            return;
+        }
+
+        // Determinar qué cambió
+        const changes = {};
+        if (Math.round(newPrice) !== Math.round(currentPrice)) changes.new_price = newPrice;
+        if (newStock !== currentStock) changes.new_stock = newStock;
+
+        if (Object.keys(changes).length === 0) {
+            alert('No hay cambios que guardar.');
+            return;
+        }
+
+        const saveBtn = document.getElementById('edit-modal-save');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Guardando...';
+
+        try {
+            const result = await api.updateProduct(productId, changes);
+
+            closeModal();
+
+            if (result.warning) {
+                alert(`⚠️ ${result.message}\n${result.warning}`);
+            } else {
+                alert(`✅ Producto actualizado correctamente.`);
+            }
+
+            await loadProducts();
+        } catch (error) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Guardar cambios';
+            alert(`❌ Error: ${error.message}`);
+        }
+    });
+}

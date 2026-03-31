@@ -190,23 +190,41 @@ async function getSealedProductsByGame(req, res) {
 // ===========================================================
 
 /**
- * PATCH /api/products/:id/price
- * Actualiza el precio de un producto en la BD local y en Shopify
+ * PATCH /api/products/:id/update
+ * Actualiza precio y/o stock de un producto en la BD local y en Shopify
  * 
- * @body {number} new_price - Nuevo precio en CLP
+ * @body {number} [new_price] - Nuevo precio en CLP
+ * @body {number} [new_stock] - Nuevo stock (cantidad)
  */
-async function updateProductPrice(req, res) {
+async function updateProduct(req, res) {
     try {
         const { id } = req.params;
-        const { new_price } = req.body;
+        const { new_price, new_stock } = req.body;
 
-        logger.info(`Actualizando precio del producto ${id} a ${new_price}`);
+        logger.info(`Actualizando producto ${id}`, { new_price, new_stock });
 
         // Validaciones
-        if (!new_price || isNaN(new_price) || new_price <= 0) {
+        const hasPrice = new_price !== undefined && new_price !== null;
+        const hasStock = new_stock !== undefined && new_stock !== null;
+
+        if (!hasPrice && !hasStock) {
+            return res.status(400).json({
+                success: false,
+                error: 'Debes enviar al menos new_price o new_stock'
+            });
+        }
+
+        if (hasPrice && (isNaN(new_price) || new_price <= 0)) {
             return res.status(400).json({
                 success: false,
                 error: 'Precio inválido. Debe ser un número mayor a 0'
+            });
+        }
+
+        if (hasStock && (isNaN(new_stock) || new_stock < 0 || !Number.isInteger(Number(new_stock)))) {
+            return res.status(400).json({
+                success: false,
+                error: 'Stock inválido. Debe ser un entero >= 0'
             });
         }
 
@@ -221,51 +239,69 @@ async function updateProductPrice(req, res) {
         }
 
         const oldPrice = parseFloat(product.current_price);
+        const oldStock = product.inventory_quantity;
+        const warnings = [];
 
         // Actualizar en BD local
-        await product.update({
-            current_price: new_price,
-            last_synced_at: new Date()
-        });
+        const updateData = { last_synced_at: new Date() };
+        if (hasPrice) updateData.current_price = parseFloat(new_price);
+        if (hasStock) updateData.inventory_quantity = parseInt(new_stock);
 
-        logger.info(`✅ Precio actualizado en BD: ${oldPrice} → ${new_price}`);
+        await product.update(updateData);
+        logger.info(`✅ Producto actualizado en BD`);
 
-        // Actualizar en Shopify
-        try {
-            await shopifyService.updateProductVariantPrice(
-                product.variant_id,
-                new_price
-            );
-            logger.info(`✅ Precio actualizado en Shopify`);
-        } catch (shopifyError) {
-            logger.error('⚠️  Error actualizando en Shopify:', shopifyError.message);
-            // No fallar la request, pero avisar
-            return res.json({
-                success: true,
-                message: 'Precio actualizado en BD, pero falló la sincronización con Shopify',
-                product: {
-                    id: product.id,
-                    title: product.title,
-                    old_price: oldPrice,
-                    new_price: parseFloat(new_price)
-                },
-                warning: `Error en Shopify: ${shopifyError.message}`
-            });
+        // Actualizar precio en Shopify
+        if (hasPrice) {
+            try {
+                await shopifyService.updateProductVariantPrice(
+                    product.shopify_id,
+                    product.variant_id,
+                    parseFloat(new_price)
+                );
+                logger.info(`✅ Precio actualizado en Shopify`);
+            } catch (shopifyError) {
+                logger.error('⚠️  Error actualizando precio en Shopify:', shopifyError.message);
+                warnings.push(`Precio: ${shopifyError.message}`);
+            }
         }
 
-        res.json({
+        // Actualizar stock en Shopify
+        if (hasStock) {
+            try {
+                await shopifyService.updateVariantStock(
+                    product.variant_id,
+                    parseInt(new_stock)
+                );
+                logger.info(`✅ Stock actualizado en Shopify`);
+            } catch (shopifyError) {
+                logger.error('⚠️  Error actualizando stock en Shopify:', shopifyError.message);
+                warnings.push(`Stock: ${shopifyError.message}`);
+            }
+        }
+
+        const response = {
             success: true,
-            message: 'Precio actualizado correctamente en BD y Shopify',
+            message: warnings.length > 0
+                ? 'Producto actualizado en BD, pero hubo errores con Shopify'
+                : 'Producto actualizado correctamente en BD y Shopify',
             product: {
                 id: product.id,
                 title: product.title,
                 old_price: oldPrice,
-                new_price: parseFloat(new_price)
+                new_price: hasPrice ? parseFloat(new_price) : oldPrice,
+                old_stock: oldStock,
+                new_stock: hasStock ? parseInt(new_stock) : oldStock
             }
-        });
+        };
+
+        if (warnings.length > 0) {
+            response.warning = warnings.join(' | ');
+        }
+
+        res.json(response);
 
     } catch (error) {
-        logger.error('Error actualizando precio:', error.message);
+        logger.error('Error actualizando producto:', error.message);
         res.status(500).json({
             success: false,
             error: error.message
@@ -279,5 +315,5 @@ async function updateProductPrice(req, res) {
 
 module.exports = {
     getSealedProductsByGame,
-    updateProductPrice
+    updateProduct
 };

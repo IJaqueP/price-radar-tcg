@@ -377,7 +377,7 @@ async function updateProductPrice(productId, newPrice) {
     try {
         showLoader();
 
-        const response = await api.patch(`/products/${productId}/price`, {
+        const response = await api.patch(`/products/${productId}/update`, {
             new_price: newPrice
         });
 

@@ -14,24 +14,24 @@
     letter-spacing: 0.05em;
 }
 
-.badge-stock.high {
-    background: var(--color-success-light);
-    color: var(--stock-high);
+.badge-stock.stock-high {
+    background: var(--color-success-light, rgba(40, 167, 69, 0.15));
+    color: var(--stock-high, #28a745);
 }
 
-.badge-stock.medium {
-    background: var(--color-warning-light);
-    color: var(--stock-medium);
+.badge-stock.stock-medium {
+    background: var(--color-warning-light, rgba(255, 193, 7, 0.15));
+    color: var(--stock-medium, #ffc107);
 }
 
-.badge-stock.low {
-    background: var(--color-danger-light);
-    color: var(--stock-low);
+.badge-stock.stock-low {
+    background: var(--color-danger-light, rgba(220, 53, 69, 0.15));
+    color: var(--stock-low, #dc3545);
 }
 
-.badge-stock.out {
+.badge-stock.stock-out {
     background: rgba(107, 114, 128, 0.15);
-    color: var(--stock-out);
+    color: var(--stock-out, #6b7280);
 }
 
 .badge-stock i {

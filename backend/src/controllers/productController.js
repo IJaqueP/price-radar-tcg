@@ -21,8 +21,10 @@ const logger = require('../utils/logger');
 */
 async function getProductAlerts(req, res) {
     try {
-        const { game, category, limit = 50 } = req.query;
-        const threshold = parseFloat(process.env.PRICE_THRESHOLD_PERCENTAGE) || 3;
+        const { game, category, limit = 50, threshold: thresholdParam } = req.query;
+        const threshold = thresholdParam !== undefined
+            ? parseFloat(thresholdParam)
+            : (parseFloat(process.env.PRICE_THRESHOLD_PERCENTAGE) || 3);
 
         logger.info('Obteniendo productos con alertas', { game, category });
 
@@ -57,10 +59,12 @@ async function getProductAlerts(req, res) {
                     },
                     attributes: [
                         'id',
+                        'shopify_id',
                         'title',
                         'shopify_sku',
                         'inventory_quantity',
                         'current_price',
+                        'variant_id',
                         'product_type',
                         'vendor',
                         'raw_data'
@@ -104,6 +108,13 @@ async function getProductAlerts(req, res) {
                     product.raw_data?.image?.url ||
                     null;
 
+                const shopifyHandle = product.raw_data?.handle || '';
+                // Build Shopify admin URL from the product GID (gid://shopify/Product/123456)
+                const shopifyNumericId = product.shopify_id ? product.shopify_id.split('/').pop() : '';
+                const shopifyAdminUrl = shopifyNumericId
+                    ? `https://${process.env.SHOPIFY_STORE_URL || 'mtg-oasis.myshopify.com'}/admin/products/${shopifyNumericId}`
+                    : (shopifyHandle ? `https://${process.env.SHOPIFY_STORE_URL || 'mtg-oasis.myshopify.com'}/products/${shopifyHandle}` : '');
+
                 return {
                     id: product.id,
                     title: product.title,
@@ -111,7 +122,9 @@ async function getProductAlerts(req, res) {
                     game: gameOutputMap[mapping.game] || mapping.game,
                     category: mapping.product_type || product.product_type,
                     image_url: imageUrl,
-                    stock: product.inventory_quantity,
+                    shopify_url: shopifyAdminUrl,
+                    variant_id: product.variant_id,
+                    stock: product.inventory_quantity != null ? product.inventory_quantity : 0,
                     shopify_price: shopifyPrice,
                     market_price: marketPriceClp,
                     market_price_usd: marketPriceUsd,

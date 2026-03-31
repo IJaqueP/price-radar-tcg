@@ -94,11 +94,20 @@ class ShopifyService {
                         node {
                             id
                             title
+                            handle
                             status
                             productType
                             vendor
                             createdAt
                             updatedAt
+                            images(first: 1) {
+                                edges {
+                                    node {
+                                        url
+                                        altText
+                                    }
+                                }
+                            }
                             collections(first: 10) {
                                 edges {
                                     node {
@@ -184,11 +193,20 @@ class ShopifyService {
                         node {
                             id
                             title
+                            handle
                             status
                             productType
                             vendor
                             createdAt
                             updatedAt
+                            images(first: 1) {
+                                edges {
+                                    node {
+                                        url
+                                        altText
+                                    }
+                                }
+                            }
                             collections(first: 10) {
                                 edges {
                                     node {
@@ -470,17 +488,26 @@ class ShopifyService {
 
     /**
      * Actualiza el precio de una variante de producto en Shopify
+     * @param {string} productId - ID del producto (formato: gid://shopify/Product/123)
      * @param {string} variantId - ID de la variante (formato: gid://shopify/ProductVariant/123)
      * @param {number} newPrice - Nuevo precio en CLP
      * @returns {Promise<Object>} - Variante actualizada
      */
-    async updateProductVariantPrice(variantId, newPrice) {
+    async updateProductVariantPrice(productId, variantId, newPrice) {
         console.log(`📝 Actualizando precio en Shopify: ${variantId} → $${newPrice}`);
 
+        // Asegurar formato GID
+        if (!productId.startsWith('gid://')) {
+            productId = `gid://shopify/Product/${productId}`;
+        }
+        if (!variantId.startsWith('gid://')) {
+            variantId = `gid://shopify/ProductVariant/${variantId}`;
+        }
+
         const mutation = `
-            mutation productVariantUpdate($input: ProductVariantInput!) {
-                productVariantUpdate(input: $input) {
-                    productVariant {
+            mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+                productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+                    productVariants {
                         id
                         price
                         title
@@ -494,22 +521,25 @@ class ShopifyService {
         `;
 
         const variables = {
-            input: {
-                id: variantId,
-                price: newPrice.toString()
-            }
+            productId: productId,
+            variants: [
+                {
+                    id: variantId,
+                    price: newPrice.toString()
+                }
+            ]
         };
 
         try {
             const data = await this.graphqlQuery(mutation, variables);
 
-            if (data.productVariantUpdate.userErrors.length > 0) {
-                const errors = data.productVariantUpdate.userErrors.map(e => e.message).join(', ');
+            if (data.productVariantsBulkUpdate.userErrors.length > 0) {
+                const errors = data.productVariantsBulkUpdate.userErrors.map(e => e.message).join(', ');
                 throw new Error(`Shopify errors: ${errors}`);
             }
 
             console.log('✅ Precio actualizado en Shopify');
-            return data.productVariantUpdate.productVariant;
+            return data.productVariantsBulkUpdate.productVariants[0];
 
         } catch (error) {
             console.error(`❌ Error actualizando precio en Shopify: ${error.message}`);
@@ -563,6 +593,102 @@ class ShopifyService {
             console.error(`❌ Error consultando inventory item ${inventoryItemId}: ${error.message}`);
             return null;
         }
+    }
+
+    /**
+     * Obtiene el inventoryItemId y locationId de una variante desde Shopify
+     * Usa inventory levels para obtener la location sin necesitar read_locations scope
+     * @param {string} variantId - GID de la variante
+     * @returns {Promise<{inventoryItemId: string, locationId: string}>}
+     */
+    async getVariantInventoryInfo(variantId) {
+        if (!variantId.startsWith('gid://')) {
+            variantId = `gid://shopify/ProductVariant/${variantId}`;
+        }
+
+        const query = `
+            query getVariantInventory($id: ID!) {
+                productVariant(id: $id) {
+                    inventoryItem {
+                        id
+                        inventoryLevels(first: 1) {
+                            edges {
+                                node {
+                                    location {
+                                        id
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+
+        const data = await this.graphqlQuery(query, { id: variantId });
+        const inventoryItem = data.productVariant?.inventoryItem;
+        if (!inventoryItem?.id) {
+            throw new Error('No se encontró inventoryItem para la variante');
+        }
+
+        const locationId = inventoryItem.inventoryLevels?.edges?.[0]?.node?.location?.id;
+        if (!locationId) {
+            throw new Error('No se encontró location para la variante. Verifica que tenga inventario asignado.');
+        }
+
+        return {
+            inventoryItemId: inventoryItem.id,
+            locationId
+        };
+    }
+
+    /**
+     * Actualiza el stock (inventory quantity) de una variante en Shopify
+     * @param {string} variantId - GID de la variante
+     * @param {number} quantity - Nueva cantidad
+     * @returns {Promise<Object>} - Resultado de la operación
+     */
+    async updateVariantStock(variantId, quantity) {
+        console.log(`📦 Actualizando stock en Shopify: ${variantId} → ${quantity}`);
+
+        const { inventoryItemId, locationId } = await this.getVariantInventoryInfo(variantId);
+
+        const mutation = `
+            mutation inventorySetOnHandQuantities($input: InventorySetOnHandQuantitiesInput!) {
+                inventorySetOnHandQuantities(input: $input) {
+                    inventoryAdjustmentGroup {
+                        reason
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+
+        const variables = {
+            input: {
+                reason: "correction",
+                setQuantities: [
+                    {
+                        inventoryItemId,
+                        locationId,
+                        quantity: parseInt(quantity)
+                    }
+                ]
+            }
+        };
+
+        const data = await this.graphqlQuery(mutation, variables);
+
+        if (data.inventorySetOnHandQuantities.userErrors.length > 0) {
+            const errors = data.inventorySetOnHandQuantities.userErrors.map(e => e.message).join(', ');
+            throw new Error(`Shopify inventory errors: ${errors}`);
+        }
+
+        console.log('✅ Stock actualizado en Shopify');
+        return data.inventorySetOnHandQuantities;
     }
 
     /**

@@ -50,11 +50,11 @@ router.get('/:id', productController.getProductDetail);
 
 
 /*
-    PATCH /api/products/:id/price
-    Actualiza el precio de un producto en Shopify (BD + Shopify)
-    Body: { new_price: number }
+    PATCH /api/products/:id/update
+    Actualiza precio y/o stock de un producto (BD + Shopify)
+    Body: { new_price?: number, new_stock?: number }
 */
-router.patch('/:id/price', sealedProductsController.updateProductPrice);
+router.patch('/:id/update', sealedProductsController.updateProduct);
 
 
 /*

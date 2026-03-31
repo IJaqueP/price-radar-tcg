@@ -190,7 +190,14 @@ api.getProductDetail = (productId) => {
  * Productos - Actualizar precio de un producto
  */
 api.updateProductPrice = (productId, newPrice) => {
-    return api.patch(`/products/${productId}/price`, { new_price: newPrice });
+    return api.patch(`/products/${productId}/update`, { new_price: newPrice });
+};
+
+/**
+ * Productos - Actualizar producto (precio y/o stock)
+ */
+api.updateProduct = (productId, data) => {
+    return api.patch(`/products/${productId}/update`, data);
 };
 
 /**
