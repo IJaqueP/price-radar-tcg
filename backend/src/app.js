@@ -81,11 +81,12 @@ app.use((req, res, next) => {
 // ===========================================================
 
 /*
-    RUTA RAÍZ
-        - GET /
+    RUTA RAÍZ DE LA API
+        - GET /api
         Responde con información básica de la API
+        (La ruta / ahora sirve el frontend)
 */
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.json(
         {
             message: 'Price Radar TCG - API Backend',
